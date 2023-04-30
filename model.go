@@ -7,5 +7,9 @@ type Config struct {
 
 type Group struct {
 	Id      string             `json:"id"`
-	Configs map[string]*Config `json:"configs"`
+	Configs map[string]*string `json:"configs"`
+}
+
+type AdoConfig struct {
+	Appends map[string]*string `json:"configIds"`
 }

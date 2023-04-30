@@ -19,14 +19,21 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	configServer := dbServerConfig{
-		data: map[string]*Config{},
+	server := dbServerConfig{
+		data:      map[string]*Config{},
+		dataGroup: map[string]*Group{},
 	}
 
-	router.HandleFunc("/config/", configServer.createConfigHandler).Methods("POST")
-	router.HandleFunc("/configs", configServer.getAllHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/", configServer.getConfigHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/", configServer.delConfigHandler).Methods("DELETE")
+	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
+	router.HandleFunc("/configs/", server.getAllHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/", server.delConfigHandler).Methods("DELETE")
+
+	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
+	router.HandleFunc("/group/{id}/", server.appendGroupHandler).Methods("POST")
+	router.HandleFunc("/groups/", server.getAllGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/", server.getGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/", server.delGroupHandler).Methods("DELETE")
 
 	//init server
 

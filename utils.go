@@ -27,7 +27,17 @@ func decodeGroupBody(r io.Reader) (*Group, error) {
 		return nil, err
 	}
 	return &rt, nil
+}
 
+func decodeAppendBody(r io.Reader) (*AdoConfig, error) {
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+
+	var rt AdoConfig
+	if err := dec.Decode(&rt); err != nil {
+		return nil, err
+	}
+	return &rt, nil
 }
 
 func renderJSON(w http.ResponseWriter, v interface{}) {

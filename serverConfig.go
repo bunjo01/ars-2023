@@ -9,7 +9,8 @@ import (
 )
 
 type dbServerConfig struct {
-	data map[string]*Config
+	data      map[string]*Config
+	dataGroup map[string]*Group
 }
 
 func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.Request) {
@@ -21,7 +22,7 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 	}
 
 	if mediatype != "application/json" {
-		err := errors.New("Expected application/json Content-type")
+		err := errors.New("expected application/json Content-type")
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
