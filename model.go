@@ -12,6 +12,6 @@ type Group struct {
 	Configs map[string]*Config `json:"configs"`
 }
 
-type AdoConfig struct {
+type DTOConfig struct {
 	NewConfigs []*string `json:"configIds"`
 }
