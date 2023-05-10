@@ -28,9 +28,17 @@ func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Re
 		return
 	}
 
+	// Generate random UUID on creation
 	id := createId()
+	// TESTING
+	staticId := rt.Id
+	if staticId == "1234" {
+		id = staticId
+	}
+
 	rt.Id = id
-	ts.dataGroup[id] = rt
+	tsId := id + rt.Version
+	ts.dataGroup[tsId] = rt
 	renderJSON(w, rt)
 
 	log.Println(rt.Id)
@@ -46,7 +54,8 @@ func (ts *dbServerConfig) getAllGroupHandler(w http.ResponseWriter, req *http.Re
 
 func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	task, ok := ts.dataGroup[id]
+	version := mux.Vars(req)["version"]
+	task, ok := ts.dataGroup[id+version]
 	if !ok {
 		err := errors.New("id not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -57,8 +66,9 @@ func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Reque
 
 func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	if v, ok := ts.dataGroup[id]; ok {
-		delete(ts.dataGroup, id)
+	version := mux.Vars(req)["version"]
+	if v, ok := ts.dataGroup[id+version]; ok {
+		delete(ts.dataGroup, id+version)
 		renderJSON(w, v)
 	} else {
 		err := errors.New("id not found")
@@ -68,6 +78,7 @@ func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Reque
 
 func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
@@ -84,7 +95,7 @@ func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Re
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if v, ok := ts.dataGroup[id]; ok {
+	if v, ok := ts.dataGroup[id+version]; ok {
 		for _, el := range rt.Appends {
 			if ts.data[*el] != nil {
 				v.Configs[*el] = el

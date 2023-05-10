@@ -8,11 +8,6 @@ import (
 	"net/http"
 )
 
-type dbServerConfig struct {
-	data      map[string]*Config
-	dataGroup map[string]*Group
-}
-
 func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
@@ -35,16 +30,23 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 
 	// Generate random UUID on creation
 	id := createId()
+	// TESTING
+	staticId := rt.Id
+	if staticId == "1234" {
+		id = staticId
+	}
+
 	rt.Id = id
-	ts.data[id] = rt
+	tsId := id + rt.Version
+	ts.data[tsId] = rt
 	renderJSON(w, rt)
 
 	// test for the sent data
-	log.Println(rt.Id)
+	log.Println(ts.data)
 
 }
 
-func (ts *dbServerConfig) getAllHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []*Config{}
 	for _, v := range ts.data {
 		allTasks = append(allTasks, v)
@@ -55,7 +57,8 @@ func (ts *dbServerConfig) getAllHandler(w http.ResponseWriter, req *http.Request
 
 func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	task, ok := ts.data[id]
+	version := mux.Vars(req)["version"]
+	task, ok := ts.data[id+version]
 	if !ok {
 		err := errors.New("id not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -66,8 +69,9 @@ func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Requ
 
 func (ts *dbServerConfig) delConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	if v, ok := ts.data[id]; ok {
-		delete(ts.data, id)
+	version := mux.Vars(req)["version"]
+	if v, ok := ts.data[id+version]; ok {
+		delete(ts.data, id+version)
 		renderJSON(w, v)
 	} else {
 		err := errors.New("id not found")
