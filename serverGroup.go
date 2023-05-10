@@ -1,26 +1,13 @@
 package main
 
 import (
-	"errors"
 	"github.com/gorilla/mux"
 	"log"
-	"mime"
 	"net/http"
 )
 
 func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Request) {
-	contentType := req.Header.Get("Content-Type")
-	mediatype, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if mediatype != "application/json" {
-		err := errors.New("expected application/json Content-type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
+	checkRequest(req, w)
 
 	rt, err := decodeGroupBody(req.Body)
 	if err != nil {
@@ -28,9 +15,17 @@ func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Re
 		return
 	}
 
+	// Generate random UUID on creation
 	id := createId()
+	// TESTING
+	staticId := rt.Id
+	if staticId == "1234" {
+		id = staticId
+	}
+
 	rt.Id = id
-	ts.dataGroup[id] = rt
+	tsId := id + rt.Version
+	ts.dataGroup[tsId] = rt
 	renderJSON(w, rt)
 
 	log.Println(rt.Id)
@@ -46,10 +41,10 @@ func (ts *dbServerConfig) getAllGroupHandler(w http.ResponseWriter, req *http.Re
 
 func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	task, ok := ts.dataGroup[id]
+	version := mux.Vars(req)["version"]
+	task, ok := ts.dataGroup[id+version]
 	if !ok {
-		err := errors.New("id not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+		throwNotFoundError(w)
 		return
 	}
 	renderJSON(w, task)
@@ -57,42 +52,32 @@ func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Reque
 
 func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	if v, ok := ts.dataGroup[id]; ok {
-		delete(ts.dataGroup, id)
+	version := mux.Vars(req)["version"]
+	if v, ok := ts.dataGroup[id+version]; ok {
+		delete(ts.dataGroup, id+version)
 		renderJSON(w, v)
 	} else {
-		err := errors.New("id not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+		throwNotFoundError(w)
 	}
 }
 
 func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
+	checkRequest(req, w)
 	id := mux.Vars(req)["id"]
-	contentType := req.Header.Get("Content-Type")
-	mediatype, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if mediatype != "application/json" {
-		err := errors.New("expected application/json Content-type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
+	version := mux.Vars(req)["version"]
 	rt, err := decodeAppendBody(req.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if v, ok := ts.dataGroup[id]; ok {
-		for _, el := range rt.Appends {
+	if v, ok := ts.dataGroup[id+version]; ok {
+		for _, el := range rt.NewConfigs {
 			if ts.data[*el] != nil {
-				v.Configs[*el] = el
+				v.Configs[*el] = ts.data[*el]
 			}
 		}
 		renderJSON(w, v)
 	} else {
-		err := errors.New("id not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+		throwNotFoundError(w)
 	}
 }

@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+type dbServerConfig struct {
+	data      map[string]*Config
+	dataGroup map[string]*Group
+}
+
 func main() {
 
 	quit := make(chan os.Signal)
@@ -25,15 +30,15 @@ func main() {
 	}
 
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
-	router.HandleFunc("/configs/", server.getAllHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/", server.delConfigHandler).Methods("DELETE")
+	router.HandleFunc("/config/all/", server.getAllConfigHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/{version}/", server.getConfigHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
 
 	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
-	router.HandleFunc("/group/{id}/", server.appendGroupHandler).Methods("POST")
-	router.HandleFunc("/groups/", server.getAllGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/", server.getGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/", server.delGroupHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/{version}/", server.appendGroupHandler).Methods("POST")
+	router.HandleFunc("/group/all/", server.getAllGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
 
 	//init server
 
