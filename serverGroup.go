@@ -96,9 +96,9 @@ func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Re
 		return
 	}
 	if v, ok := ts.dataGroup[id+version]; ok {
-		for _, el := range rt.Appends {
+		for _, el := range rt.NewConfigs {
 			if ts.data[*el] != nil {
-				v.Configs[*el] = el
+				v.Configs[*el] = ts.data[*el]
 			}
 		}
 		renderJSON(w, v)
