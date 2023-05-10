@@ -1,26 +1,13 @@
 package main
 
 import (
-	"errors"
 	"github.com/gorilla/mux"
 	"log"
-	"mime"
 	"net/http"
 )
 
 func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Request) {
-	contentType := req.Header.Get("Content-Type")
-	mediatype, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if mediatype != "application/json" {
-		err := errors.New("expected application/json Content-type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
+	checkRequest(req, w)
 
 	rt, err := decodeGroupBody(req.Body)
 	if err != nil {
@@ -57,8 +44,7 @@ func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Reque
 	version := mux.Vars(req)["version"]
 	task, ok := ts.dataGroup[id+version]
 	if !ok {
-		err := errors.New("id not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+		throwNotFoundError(w)
 		return
 	}
 	renderJSON(w, task)
@@ -71,25 +57,14 @@ func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Reque
 		delete(ts.dataGroup, id+version)
 		renderJSON(w, v)
 	} else {
-		err := errors.New("id not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+		throwNotFoundError(w)
 	}
 }
 
 func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
+	checkRequest(req, w)
 	id := mux.Vars(req)["id"]
 	version := mux.Vars(req)["version"]
-	contentType := req.Header.Get("Content-Type")
-	mediatype, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if mediatype != "application/json" {
-		err := errors.New("expected application/json Content-type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
 	rt, err := decodeAppendBody(req.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -103,7 +78,6 @@ func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Re
 		}
 		renderJSON(w, v)
 	} else {
-		err := errors.New("id not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+		throwNotFoundError(w)
 	}
 }

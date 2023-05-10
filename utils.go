@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/google/uuid"
 	"io"
+	"mime"
 	"net/http"
 )
 
@@ -53,4 +55,23 @@ func renderJSON(w http.ResponseWriter, v interface{}) {
 
 func createId() string {
 	return uuid.New().String()
+}
+
+func throwNotFoundError(w http.ResponseWriter) {
+	err := errors.New("id not found")
+	http.Error(w, err.Error(), http.StatusNotFound)
+}
+
+func checkRequest(req *http.Request, w http.ResponseWriter) {
+	contentType := req.Header.Get("Content-Type")
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if mediatype != "application/json" {
+		err := errors.New("expected application/json Content-type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
 }
