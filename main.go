@@ -12,8 +12,8 @@ import (
 )
 
 type dbServerConfig struct {
-	data      map[string]*Config
-	dataGroup map[string]*Group
+	data      map[string]*DBConfig
+	dataGroup map[string]*DBGroup
 }
 
 func main() {
@@ -25,8 +25,8 @@ func main() {
 	router.StrictSlash(true)
 
 	server := dbServerConfig{
-		data:      map[string]*Config{},
-		dataGroup: map[string]*Group{},
+		data:      map[string]*DBConfig{},
+		dataGroup: map[string]*DBGroup{},
 	}
 
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")

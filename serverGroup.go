@@ -32,7 +32,7 @@ func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Re
 }
 
 func (ts *dbServerConfig) getAllGroupHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*Group{}
+	allTasks := []*DBGroup{}
 	for _, v := range ts.dataGroup {
 		allTasks = append(allTasks, v)
 	}

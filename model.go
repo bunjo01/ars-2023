@@ -1,14 +1,14 @@
 package main
 
-type Config struct {
+type DBConfig struct {
 	Id      string             `json:"id"`
 	Entries map[string]*string `json:"entries"`
 }
 
-type Group struct {
-	Id      string             `json:"id"`
-	Version string             `json:"version"`
-	Configs map[string]*Config `json:"configs"`
+type DBGroup struct {
+	Id      string               `json:"id"`
+	Version string               `json:"version"`
+	Configs map[string]*DBConfig `json:"configs"`
 }
 
 type DTOConfig struct {

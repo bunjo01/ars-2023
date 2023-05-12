@@ -4,59 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"io"
 	"mime"
 	"net/http"
-	"strings"
 )
-
-func decodeFreeConfig(r io.Reader) (*FreeConfig, error) {
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var rt FreeConfig
-	if err := dec.Decode(&rt); err != nil {
-		return nil, err
-	}
-	return &rt, nil
-}
-
-func (con *FreeConfig) freeToDBConfig() *Config {
-	var rt Config
-	rt.Id = con.Id + separator() + con.Vers
-	rt.Entries = con.Entries
-	return &rt
-}
-func (con *Config) dBConfigToFree() *FreeConfig {
-	var rt FreeConfig
-	comb := strings.Split(con.Id, separator())
-	rt.Id = comb[0]
-	rt.Vers = comb[1]
-	rt.Entries = con.Entries
-	return &rt
-}
-
-func decodeGroupBody(r io.Reader) (*Group, error) {
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var rt Group
-	if err := dec.Decode(&rt); err != nil {
-		return nil, err
-	}
-	return &rt, nil
-}
-
-func decodeAppendBody(r io.Reader) (*DTOConfig, error) {
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var rt DTOConfig
-	if err := dec.Decode(&rt); err != nil {
-		return nil, err
-	}
-	return &rt, nil
-}
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
 	js, err := json.Marshal(v)
