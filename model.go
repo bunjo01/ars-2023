@@ -7,22 +7,27 @@ type DBConfig struct {
 
 type DBGroup struct {
 	Id      string               `json:"id"`
-	Version string               `json:"version"`
 	Configs map[string]*DBConfig `json:"configs"`
 }
 
-type DTOConfig struct {
-	NewConfigs []*string `json:"configIds"`
+type FreeGroup struct {
+	Id      string                  `json:"id"`
+	Version string                  `json:"version"`
+	Configs map[string]*GroupConfig `json:"configs"`
+}
+
+type GroupConfigList struct {
+	Configs map[string]*GroupConfig `json:"configs,string"`
 }
 
 type FreeConfig struct {
 	Id      string             `json:"id"`
-	Vers    string             `json:"version"`
+	Version string             `json:"version"`
 	Entries map[string]*string `json:"entries"`
 }
 
 type GroupConfig struct {
 	Id      string             `json:"id"`
-	Labels  string             `json:"labels"`
+	Labels  map[string]*string `json:"labels"`
 	Entries map[string]*string `json:"entries"`
 }

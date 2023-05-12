@@ -19,7 +19,7 @@ func decodeFreeConfig(r io.Reader) (*FreeConfig, error) {
 
 func (con *FreeConfig) freeToDBConfig() *DBConfig {
 	var rt DBConfig
-	rt.Id = con.Id + separator() + con.Vers
+	rt.Id = con.Id + separator() + con.Version
 	rt.Entries = con.Entries
 	return &rt
 }
@@ -27,7 +27,7 @@ func (con *DBConfig) dBConfigToFree() *FreeConfig {
 	var rt FreeConfig
 	comb := strings.Split(con.Id, separator())
 	rt.Id = comb[0]
-	rt.Vers = comb[1]
+	rt.Version = comb[1]
 	rt.Entries = con.Entries
 	return &rt
 }

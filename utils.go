@@ -30,10 +30,18 @@ func createId(id string) string {
 func separator() string {
 	return "|"
 }
+func labelSeparator() string {
+	return ";"
+}
 
 func throwNotFoundError(w http.ResponseWriter) {
 	err := errors.New("id not found")
 	http.Error(w, err.Error(), http.StatusNotFound)
+}
+
+func throwForbiddenError(w http.ResponseWriter) {
+	err := errors.New("already exists")
+	http.Error(w, err.Error(), http.StatusForbidden)
 }
 
 func checkRequest(req *http.Request, w http.ResponseWriter) {

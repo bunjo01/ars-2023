@@ -16,7 +16,10 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 	id := createId(rt.Id)
 	rt.Id = id
 	el := rt.freeToDBConfig()
-
+	if ts.data[el.Id] != nil {
+		throwForbiddenError(w)
+		return
+	}
 	ts.data[el.Id] = el
 	renderJSON(w, el)
 }
