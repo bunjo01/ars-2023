@@ -16,7 +16,7 @@ func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Re
 	}
 
 	// Generate random UUID on creation
-	id := createId()
+	id := createId(rt.Id)
 	// TESTING
 	staticId := rt.Id
 	if staticId == "1234" {

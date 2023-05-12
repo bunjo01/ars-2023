@@ -7,19 +7,35 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strings"
 )
 
-func decodeBody(r io.Reader) (*Config, error) {
+func decodeFreeConfig(r io.Reader) (*FreeConfig, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var rt Config
+	var rt FreeConfig
 	if err := dec.Decode(&rt); err != nil {
 		return nil, err
 	}
 	return &rt, nil
-
 }
+
+func (con *FreeConfig) freeToDBConfig() *Config {
+	var rt Config
+	rt.Id = con.Id + separator() + con.Vers
+	rt.Entries = con.Entries
+	return &rt
+}
+func (con *Config) dBConfigToFree() *FreeConfig {
+	var rt FreeConfig
+	comb := strings.Split(con.Id, separator())
+	rt.Id = comb[0]
+	rt.Vers = comb[1]
+	rt.Entries = con.Entries
+	return &rt
+}
+
 func decodeGroupBody(r io.Reader) (*Group, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
@@ -53,8 +69,16 @@ func renderJSON(w http.ResponseWriter, v interface{}) {
 	w.Write(js)
 }
 
-func createId() string {
-	return uuid.New().String()
+func createId(id string) string {
+	ret := uuid.New().String()
+	staticId := id
+	if staticId == "1234" {
+		ret = staticId
+	}
+	return ret
+}
+func separator() string {
+	return "|"
 }
 
 func throwNotFoundError(w http.ResponseWriter) {
