@@ -1,7 +1,7 @@
 package main
 
-// swagger: response ResponseConfig
-type ResponseFreeConfig struct {
+// swagger:response ConfigResponse
+type ConfigResponse struct {
 	// Id of the config
 	// in: string
 	Id string `json:"id"`

@@ -12,7 +12,7 @@ import (
 //
 //	415: ErrorResponse
 //	400: ErrorResponse
-//	201: ResponseConfig
+//	201: FreeConfig
 func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 	checkRequest(req, w)
 
@@ -32,6 +32,13 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 	renderJSON(w, el)
 }
 
+// swagger:route GET /config/all/ config getAllConfigs
+// Get all configs
+//
+// responses:
+//
+//	404: ErrorResponse
+//	200: []FreeConfig
 func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []*FreeConfig{}
 	for _, v := range ts.data {
@@ -40,6 +47,13 @@ func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.R
 	renderJSON(w, allTasks)
 }
 
+// swagger:route GET /config/{id}/ config getAllConfigVersions
+// Get all configs versions
+//
+// responses:
+//
+//	404: ErrorResponse
+//	200: []FreeConfig
 func (ts *dbServerConfig) getConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []*FreeConfig{}
 	for _, v := range ts.data {
@@ -51,6 +65,13 @@ func (ts *dbServerConfig) getConfigVersionsHandler(w http.ResponseWriter, req *h
 	renderJSON(w, allTasks)
 }
 
+// swagger:route GET /config/{id}/{version}/ config getConfig
+// Get config
+//
+// responses:
+//
+//	404: ErrorResponse
+//	200: FreeConfig
 func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
 	task, ok := ts.data[id]
@@ -61,6 +82,13 @@ func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Requ
 	renderJSON(w, task.dBConfigToFree())
 }
 
+// swagger:route DELETE /config/{id}/all/ config deleteConfigVersions
+// Delete configs
+//
+// responses:
+//
+//	404: ErrorResponse
+//	201: []FreeConfig
 func (ts *dbServerConfig) delConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	allTasks := []*FreeConfig{}
@@ -78,6 +106,13 @@ func (ts *dbServerConfig) delConfigVersionsHandler(w http.ResponseWriter, req *h
 	}
 }
 
+// swagger:route DELETE /config/{id}/{version}/ config deleteConfig
+// Delete config
+//
+// responses:
+//
+//	404: ErrorResponse
+//	201: FreeConfig
 func (ts *dbServerConfig) delConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
 	if v, ok := ts.data[id]; ok {

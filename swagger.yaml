@@ -1,7 +1,7 @@
 basePath: /
 definitions:
     FreeConfig:
-        description: 'swagger: model RequestConfig'
+        description: 'swagger: model FreeConfig'
         properties:
             entries:
                 additionalProperties:
@@ -44,16 +44,109 @@ paths:
                   x-go-name: Body
             responses:
                 "201":
-                    $ref: '#/responses/ResponseConfig'
+                    description: FreeConfig
+                    schema:
+                        $ref: '#/definitions/FreeConfig'
                 "400":
                     $ref: '#/responses/ErrorResponse'
                 "415":
                     $ref: '#/responses/ErrorResponse'
             tags:
                 - config
+    /config/{id}/:
+        get:
+            description: Get all configs versions
+            operationId: getAllConfigVersions
+            responses:
+                "200":
+                    description: FreeConfig
+                    schema:
+                        items:
+                            $ref: '#/definitions/FreeConfig'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+    /config/{id}/{version}/:
+        delete:
+            description: Delete config
+            operationId: deleteConfig
+            responses:
+                "201":
+                    description: FreeConfig
+                    schema:
+                        $ref: '#/definitions/FreeConfig'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+        get:
+            description: Get config
+            operationId: getConfig
+            responses:
+                "200":
+                    description: FreeConfig
+                    schema:
+                        $ref: '#/definitions/FreeConfig'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+    /config/{id}/all/:
+        delete:
+            description: Delete configs
+            operationId: deleteConfigVersions
+            responses:
+                "201":
+                    description: FreeConfig
+                    schema:
+                        items:
+                            $ref: '#/definitions/FreeConfig'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+    /config/all/:
+        get:
+            description: Get all configs
+            operationId: getAllConfigs
+            responses:
+                "200":
+                    description: FreeConfig
+                    schema:
+                        items:
+                            $ref: '#/definitions/FreeConfig'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
 produces:
     - application/json
 responses:
+    ConfigResponse:
+        description: ""
+        headers:
+            entries:
+                description: |-
+                    Entries map of config options
+                    in: map[string]*string
+            id:
+                description: |-
+                    Id of the config
+                    in: string
+                type: string
+            version:
+                description: |-
+                    Version of the config
+                    in: string
+                type: string
+        schema:
+            additionalProperties:
+                type: string
+            type: object
     ErrorResponse:
         description: ""
         headers:

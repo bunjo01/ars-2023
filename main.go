@@ -62,7 +62,7 @@ func main() {
 	// SwaggerUI
 	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
 	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
-	router.Handle("/nemanja", developerDocumentationHandler)
+	router.Handle("/docs", developerDocumentationHandler)
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

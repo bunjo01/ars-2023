@@ -26,7 +26,7 @@ type GroupConfigList struct {
 	Configs map[string]*GroupConfig `json:"configs,string"`
 }
 
-// swagger: model RequestConfig
+// swagger: model FreeConfig
 type FreeConfig struct {
 	// Id of the config
 	// in: string
