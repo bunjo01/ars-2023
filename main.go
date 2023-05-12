@@ -1,7 +1,20 @@
+// Config Service API
+//
+//	   Title: Config Service API
+//
+//	   Schemes: http
+//		  Version: 0.0.1
+//		  BasePath: /
+//
+//		  Produces:
+//			- application/json
+//
+// swagger:meta
 package main
 
 import (
 	"context"
+	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -44,8 +57,14 @@ func main() {
 	router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
 	router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
 
-	//init server
+	router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
 
+	// SwaggerUI
+	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
+	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
+	router.Handle("/nemanja", developerDocumentationHandler)
+
+	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
 	go func() {
 		log.Println("...server starting...")

@@ -1,0 +1,75 @@
+basePath: /
+definitions:
+    FreeConfig:
+        description: 'swagger: model RequestConfig'
+        properties:
+            entries:
+                additionalProperties:
+                    type: string
+                description: |-
+                    Entries map of config options
+                    in: map[string]*string
+                type: object
+                x-go-name: Entries
+            id:
+                description: |-
+                    Id of the config
+                    in: string
+                type: string
+                x-go-name: Id
+            version:
+                description: |-
+                    Version of the config
+                    in: string
+                type: string
+                x-go-name: Version
+        type: object
+        x-go-package: ars-2023
+info:
+    description: 'Title: Config Service API'
+    title: Config Service API
+    version: 0.0.1
+paths:
+    /config/:
+        post:
+            description: Add new config
+            operationId: createConfig
+            parameters:
+                - description: 'name: body'
+                  in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/FreeConfig'
+                  x-go-name: Body
+            responses:
+                "201":
+                    $ref: '#/responses/ResponseConfig'
+                "400":
+                    $ref: '#/responses/ErrorResponse'
+                "415":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - config
+produces:
+    - application/json
+responses:
+    ErrorResponse:
+        description: ""
+        headers:
+            message:
+                description: |-
+                    Message of the error
+                    in: string
+                type: string
+            status:
+                description: |-
+                    Error status code
+                    in: int64
+                format: int64
+                type: integer
+    NoContentResponse:
+        description: ""
+schemes:
+    - http
+swagger: "2.0"

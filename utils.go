@@ -57,3 +57,7 @@ func checkRequest(req *http.Request, w http.ResponseWriter) {
 		return
 	}
 }
+
+func (ts *dbServerConfig) swaggerHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./swagger.yaml")
+}

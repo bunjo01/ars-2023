@@ -1,7 +1,13 @@
 package main
 
+// swagger: model DBConfig
 type DBConfig struct {
-	Id      string             `json:"id"`
+	// Id of the config
+	// in: string
+	Id string `json:"id"`
+
+	// Entries map of config options
+	// in: map[string]*string
 	Entries map[string]*string `json:"entries"`
 }
 
@@ -20,9 +26,18 @@ type GroupConfigList struct {
 	Configs map[string]*GroupConfig `json:"configs,string"`
 }
 
+// swagger: model RequestConfig
 type FreeConfig struct {
-	Id      string             `json:"id"`
-	Version string             `json:"version"`
+	// Id of the config
+	// in: string
+	Id string `json:"id"`
+
+	// Version of the config
+	// in: string
+	Version string `json:"version"`
+
+	// Entries map of config options
+	// in: map[string]*string
 	Entries map[string]*string `json:"entries"`
 }
 

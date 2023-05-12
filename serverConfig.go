@@ -5,6 +5,14 @@ import (
 	"net/http"
 )
 
+// swagger:route POST /config/ config createConfig
+// Add new config
+//
+// responses:
+//
+//	415: ErrorResponse
+//	400: ErrorResponse
+//	201: ResponseConfig
 func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 	checkRequest(req, w)
 
