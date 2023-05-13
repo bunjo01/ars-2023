@@ -25,6 +25,58 @@ definitions:
                 x-go-name: Version
         type: object
         x-go-package: ars-2023
+    FreeGroup:
+        description: 'FreeGroup swagger: model FreeGroup'
+        properties:
+            configs:
+                additionalProperties:
+                    $ref: '#/definitions/GroupConfig'
+                description: |-
+                    Entries map of configs
+                    in: map[string]*GroupConfig
+                type: object
+                x-go-name: Configs
+            id:
+                description: |-
+                    Id of the group
+                    in: string
+                type: string
+                x-go-name: Id
+            version:
+                description: |-
+                    Version of the group
+                    in: string
+                type: string
+                x-go-name: Version
+        type: object
+        x-go-package: ars-2023
+    GroupConfig:
+        description: 'GroupConfig swagger: model GroupConfig'
+        properties:
+            entries:
+                additionalProperties:
+                    type: string
+                description: |-
+                    Entries of the config
+                    in: map[string]*string
+                type: object
+                x-go-name: Entries
+            id:
+                description: |-
+                    Id of the config
+                    in: string
+                type: string
+                x-go-name: Id
+            labels:
+                additionalProperties:
+                    type: string
+                description: |-
+                    Labels of the config
+                    in: map[string]*string
+                type: object
+                x-go-name: Labels
+        type: object
+        x-go-package: ars-2023
 info:
     description: 'Title: Config Service API'
     title: Config Service API
@@ -60,7 +112,7 @@ paths:
             parameters:
                 - description: |-
                     name: ID
-                    description: Config ID
+                    description: Entity ID
                   in: path
                   name: id
                   required: true
@@ -68,7 +120,7 @@ paths:
                   x-go-name: Id
                 - description: |-
                     name: Version
-                    description: Config description
+                    description: Entity version
                   in: path
                   name: version
                   required: true
@@ -89,7 +141,7 @@ paths:
             parameters:
                 - description: |-
                     name: ID
-                    description: Config ID
+                    description: Entity ID
                   in: path
                   name: id
                   required: true
@@ -97,7 +149,7 @@ paths:
                   x-go-name: Id
                 - description: |-
                     name: Version
-                    description: Config description
+                    description: Entity version
                   in: path
                   name: version
                   required: true
@@ -119,7 +171,7 @@ paths:
             parameters:
                 - description: |-
                     name: ID
-                    description: Config ID
+                    description: Entity ID
                   in: path
                   name: id
                   required: true
@@ -142,7 +194,7 @@ paths:
             parameters:
                 - description: |-
                     name: ID
-                    description: Config ID
+                    description: Entity ID
                   in: path
                   name: id
                   required: true
@@ -176,6 +228,205 @@ paths:
                     $ref: '#/responses/Teapot'
             tags:
                 - Configuration
+    /group/:
+        post:
+            description: Create new group
+            operationId: createGroup
+            parameters:
+                - description: 'name: body'
+                  in: body
+                  name: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/FreeGroup'
+                  x-go-name: Body
+            responses:
+                "201":
+                    description: FreeGroup
+                    schema:
+                        $ref: '#/definitions/FreeGroup'
+                "400":
+                    $ref: '#/responses/ErrorResponse'
+                "415":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - Group
+    /group/{id}/{version}/:
+        delete:
+            description: Delete specific group
+            operationId: deleteGroup
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Entity ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+                - description: |-
+                    name: Version
+                    description: Entity version
+                  in: path
+                  name: version
+                  required: true
+                  type: string
+                  x-go-name: Version
+            responses:
+                "201":
+                    description: FreeGroup
+                    schema:
+                        $ref: '#/definitions/FreeGroup'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - Group
+        get:
+            description: Get specific group
+            operationId: getGroup
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Entity ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+                - description: |-
+                    name: Version
+                    description: Entity version
+                  in: path
+                  name: version
+                  required: true
+                  type: string
+                  x-go-name: Version
+            responses:
+                "200":
+                    description: FreeGroup
+                    schema:
+                        $ref: '#/definitions/FreeGroup'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - Group
+    /group/{id}/{version}/{new}/:
+        post:
+            description: Create new group with appended config
+            operationId: appendGroup
+            parameters:
+                - description: 'name: body'
+                  in: body
+                  name: configs
+                  required: true
+                  schema:
+                    additionalProperties:
+                        $ref: '#/definitions/GroupConfig'
+                    type: object
+                  x-go-name: Configs
+                - description: |-
+                    name: ID
+                    description: Entity ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+                - description: |-
+                    name: Version
+                    description: Entity version
+                  in: path
+                  name: version
+                  required: true
+                  type: string
+                  x-go-name: Version
+                - description: |-
+                    name: Version
+                    description: Entity version
+                  in: path
+                  name: new
+                  required: true
+                  type: string
+                  x-go-name: Version
+            responses:
+                "201":
+                    description: FreeGroup
+                    schema:
+                        $ref: '#/definitions/FreeGroup'
+                "400":
+                    $ref: '#/responses/ErrorResponse'
+                "403":
+                    $ref: '#/responses/ErrorResponse'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+                "415":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - Group
+    /group/{id}/all/:
+        delete:
+            description: Delete all group versions
+            operationId: deleteGroupVersions
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Entity ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+            responses:
+                "201":
+                    description: FreeGroup
+                    schema:
+                        items:
+                            $ref: '#/definitions/FreeGroup'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - Group
+        get:
+            description: Get all group versions
+            operationId: getAllGroupVersions
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Entity ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+            responses:
+                "200":
+                    description: FreeGroup
+                    schema:
+                        items:
+                            $ref: '#/definitions/FreeGroup'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - Group
+    /group/all/:
+        get:
+            description: Get all groups
+            operationId: getAllGroups
+            responses:
+                "200":
+                    description: FreeGroup
+                    schema:
+                        items:
+                            $ref: '#/definitions/FreeGroup'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+                "418":
+                    $ref: '#/responses/Teapot'
+            tags:
+                - Group
 produces:
     - application/json
 responses:

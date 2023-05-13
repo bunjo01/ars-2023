@@ -5,6 +5,14 @@ import (
 	"net/http"
 )
 
+// swagger:route POST /group/ Group createGroup
+// Create new group
+//
+// responses:
+//
+//	415: ErrorResponse
+//	400: ErrorResponse
+//	201: FreeGroup
 func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Request) {
 	checkRequest(req, w)
 
@@ -24,6 +32,14 @@ func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Re
 	renderJSON(w, rt)
 }
 
+// swagger:route GET /group/all/ Group getAllGroups
+// Get all groups
+//
+// responses:
+//
+//	404: ErrorResponse
+//	418: Teapot
+//	200: []FreeGroup
 func (ts *dbServerConfig) getAllGroupHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []*FreeGroup{}
 	for _, v := range ts.dataGroup {
@@ -32,6 +48,13 @@ func (ts *dbServerConfig) getAllGroupHandler(w http.ResponseWriter, req *http.Re
 	renderJSON(w, allTasks)
 }
 
+// swagger:route GET /group/{id}/all/ Group getAllGroupVersions
+// Get all group versions
+//
+// responses:
+//
+//	404: ErrorResponse
+//	200: []FreeGroup
 func (ts *dbServerConfig) getGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []*FreeGroup{}
 	for _, v := range ts.dataGroup {
@@ -43,6 +66,13 @@ func (ts *dbServerConfig) getGroupVersionsHandler(w http.ResponseWriter, req *ht
 	renderJSON(w, allTasks)
 }
 
+// swagger:route GET /group/{id}/{version}/ Group getGroup
+// Get specific group
+//
+// responses:
+//
+//	404: ErrorResponse
+//	200: FreeGroup
 func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
 	task, ok := ts.dataGroup[id]
@@ -53,16 +83,13 @@ func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Reque
 	renderJSON(w, task.dBGroupToFree())
 }
 
-func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
-	if v, ok := ts.dataGroup[id]; ok {
-		delete(ts.dataGroup, id)
-		renderJSON(w, v.dBGroupToFree())
-	} else {
-		throwNotFoundError(w)
-	}
-}
-
+// swagger:route DELETE /group/{id}/all/ Group deleteGroupVersions
+// Delete all group versions
+//
+// responses:
+//
+//	404: ErrorResponse
+//	201: []FreeGroup
 func (ts *dbServerConfig) delGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	allTasks := []*FreeGroup{}
@@ -80,6 +107,33 @@ func (ts *dbServerConfig) delGroupVersionsHandler(w http.ResponseWriter, req *ht
 	}
 }
 
+// swagger:route DELETE /group/{id}/{version}/ Group deleteGroup
+// Delete specific group
+//
+// responses:
+//
+//	404: ErrorResponse
+//	201: FreeGroup
+func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
+	if v, ok := ts.dataGroup[id]; ok {
+		delete(ts.dataGroup, id)
+		renderJSON(w, v.dBGroupToFree())
+	} else {
+		throwNotFoundError(w)
+	}
+}
+
+// swagger:route POST /group/{id}/{version}/{new}/ Group appendGroup
+// Create new group with appended config
+//
+// responses:
+//
+//	415: ErrorResponse
+//	404: ErrorResponse
+//	403: ErrorResponse
+//	400: ErrorResponse
+//	201: FreeGroup
 func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
 	checkRequest(req, w)
 	id := mux.Vars(req)["id"]
@@ -112,7 +166,7 @@ func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Re
 			throwForbiddenError(w)
 		} else {
 			ts.dataGroup[newGroup.Id] = &newGroup
-			renderJSON(w, newGroup)
+			renderJSON(w, newGroup.dBGroupToFree())
 		}
 	} else {
 		throwNotFoundError(w)
