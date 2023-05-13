@@ -310,6 +310,48 @@ paths:
                     $ref: '#/responses/ErrorResponse'
             tags:
                 - Group
+    /group/{id}/{version}/{labels}/:
+        get:
+            description: Get configs by label
+            operationId: getConfigsByLabel
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Entity ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+                - description: |-
+                    name: Version
+                    description: Entity version
+                  in: path
+                  name: version
+                  required: true
+                  type: string
+                  x-go-name: Version
+                - description: |-
+                    name: Labels
+                    description: Entity labels
+                  in: path
+                  name: labels
+                  required: true
+                  type: string
+                  x-go-name: Labels
+            responses:
+                "200":
+                    description: GroupConfig
+                    schema:
+                        items:
+                            $ref: '#/definitions/GroupConfig'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+                "418":
+                    $ref: '#/responses/Teapot'
+            tags:
+                - Label
     /group/{id}/{version}/{new}/:
         post:
             description: Create new group with appended config
@@ -363,6 +405,56 @@ paths:
                     $ref: '#/responses/ErrorResponse'
             tags:
                 - Group
+    /group/{id}/{version}/{new}/{labels}/:
+        delete:
+            description: Delete configs by label
+            operationId: delConfigsByLabel
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Entity ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+                - description: |-
+                    name: Version
+                    description: Entity version
+                  in: path
+                  name: version
+                  required: true
+                  type: string
+                  x-go-name: Version
+                - description: |-
+                    name: Version
+                    description: Entity version
+                  in: path
+                  name: new
+                  required: true
+                  type: string
+                  x-go-name: Version
+                - description: |-
+                    name: Labels
+                    description: Entity labels
+                  in: path
+                  name: labels
+                  required: true
+                  type: string
+                  x-go-name: Labels
+            responses:
+                "200":
+                    description: FreeGroup
+                    schema:
+                        $ref: '#/definitions/FreeGroup'
+                "403":
+                    $ref: '#/responses/ErrorResponse'
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+                "418":
+                    $ref: '#/responses/Teapot'
+            tags:
+                - Label
     /group/{id}/all/:
         delete:
             description: Delete all group versions

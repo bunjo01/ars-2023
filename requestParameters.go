@@ -36,7 +36,8 @@ type RequestAppendBody struct {
 	Configs map[string]*GroupConfig `json:"configs,string"`
 }
 
-// swagger:parameters getAllConfigVersions getConfig deleteConfigVersions deleteConfig getAllGroupVersions getGroup deleteGroup deleteGroupVersions appendGroup
+// swagger:parameters getAllConfigVersions getConfig deleteConfigVersions deleteConfig delConfigsByLabel
+// swagger:parameters getAllGroupVersions getGroup deleteGroup deleteGroupVersions appendGroup getConfigsByLabel
 type EntityId struct {
 	// name: ID
 	// description: Entity ID
@@ -45,7 +46,7 @@ type EntityId struct {
 	Id string `json:"id"`
 }
 
-// swagger:parameters getConfig deleteConfig getGroup deleteGroup appendGroup
+// swagger:parameters getConfig deleteConfig getGroup deleteGroup appendGroup getConfigsByLabel delConfigsByLabel
 type EntityVersion struct {
 	// name: Version
 	// description: Entity version
@@ -54,11 +55,20 @@ type EntityVersion struct {
 	Version string `json:"version"`
 }
 
-// swagger:parameters appendGroup
+// swagger:parameters appendGroup delConfigsByLabel
 type EntityNewVersion struct {
 	// name: Version
 	// description: Entity version
 	// required: true
 	// in: path
 	Version string `json:"new"`
+}
+
+// swagger:parameters getConfigsByLabel delConfigsByLabel
+type EntityLabels struct {
+	// name: Labels
+	// description: Entity labels
+	// required: true
+	// in: path
+	Labels string `json:"labels"`
 }

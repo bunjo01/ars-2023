@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"mime"
 	"net/http"
+	"strings"
 )
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
@@ -60,6 +61,21 @@ func checkRequest(req *http.Request, w http.ResponseWriter) {
 		err := errors.New("expected application/json Content-type")
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
+	}
+}
+
+func mapLabels(labelString string) map[string]*string {
+	labels := make(map[string]*string)
+	if strings.Contains(labelString, ":") && len(labelString) > 1 && strings.Count(labelString, ":") == strings.Count(labelString, ";")+1 {
+		for _, v := range strings.Split(labelString, labelSeparator()) {
+			en := strings.Split(v, ":")
+			labels[en[0]] = &en[1]
+		}
+		return labels
+	} else {
+		badMap := "bad_label"
+		labels["403"] = &badMap
+		return labels
 	}
 }
 

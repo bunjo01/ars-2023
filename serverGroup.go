@@ -171,5 +171,74 @@ func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Re
 	} else {
 		throwNotFoundError(w)
 	}
+}
 
+// swagger:route GET /group/{id}/{version}/{labels}/ Label getConfigsByLabel
+// Get configs by label
+//
+// responses:
+//
+//	404: ErrorResponse
+//	418: Teapot
+//	200: []GroupConfig
+func (ts *dbServerConfig) getConfigsByLabel(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
+	labels := mux.Vars(req)["labels"]
+	allTasks := []*GroupConfig{}
+	if v, ok := ts.dataGroup[id]; ok {
+		for _, val := range v.Configs {
+			if val.compareLabels(labels) {
+				allTasks = append(allTasks, val.dBToGroupConfig())
+			}
+		}
+	} else {
+		throwNotFoundError(w)
+	}
+	if len(allTasks) == 0 {
+		throwTeapot(w)
+	} else {
+		renderJSON(w, allTasks)
+	}
+}
+
+// swagger:route DELETE /group/{id}/{version}/{new}/{labels}/ Label delConfigsByLabel
+// Delete configs by label
+//
+// responses:
+//
+//	404: ErrorResponse
+//	403: ErrorResponse
+//	418: Teapot
+//	200: FreeGroup
+func (ts *dbServerConfig) delConfigsByLabel(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	oldVersion := mux.Vars(req)["version"]
+	newVersion := mux.Vars(req)["new"]
+	oldData := id + separator() + oldVersion
+	newData := id + separator() + newVersion
+	labels := mux.Vars(req)["labels"]
+
+	if v, ok := ts.dataGroup[oldData]; ok {
+		var newGroup DBGroup
+		newGroup.Configs = make(map[string]*DBConfig)
+		newGroup.Id = newData
+		for _, old := range v.Configs {
+			if !old.compareLabels(labels) {
+				x := old.dBToGroupConfig()
+				x.Id = createId(x.Id)
+				appen := x.groupConfigToDBConfig()
+				newGroup.Configs[appen.Id] = appen
+			}
+		}
+		if len(v.Configs) == len(newGroup.Configs) {
+			throwTeapot(w)
+		} else if ts.dataGroup[newGroup.Id] != nil {
+			throwForbiddenError(w)
+		} else {
+			ts.dataGroup[newGroup.Id] = &newGroup
+			renderJSON(w, newGroup.dBGroupToFree())
+		}
+	} else {
+		throwNotFoundError(w)
+	}
 }

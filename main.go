@@ -57,6 +57,9 @@ func main() {
 	router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
 	router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
 
+	router.HandleFunc("/group/{id}/{version}/{labels}/", server.getConfigsByLabel).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", server.delConfigsByLabel).Methods("DELETE")
+
 	router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
 
 	// SwaggerUI
