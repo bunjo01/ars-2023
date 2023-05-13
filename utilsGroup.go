@@ -53,9 +53,9 @@ func decodeGroupConfigs(r io.Reader) (*GroupConfigList, error) {
 
 func (con *GroupConfig) groupConfigToDBConfig() *DBConfig {
 	var rt DBConfig
-	var lab string
+	lab := ""
 	for k, v := range con.Labels {
-		lab = k + ":" + *v + labelSeparator()
+		lab = lab + k + ":" + *v + labelSeparator()
 	}
 	lab = lab[:len(lab)-1]
 	rt.Id = lab + separator() + con.Id
