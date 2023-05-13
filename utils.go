@@ -64,7 +64,7 @@ func checkRequest(req *http.Request, w http.ResponseWriter) {
 	}
 }
 
-func mapLabels(labelString string) map[string]*string {
+func mapConfigLabels(labelString string) map[string]*string {
 	labels := make(map[string]*string)
 	if strings.Contains(labelString, ":") && len(labelString) > 1 && strings.Count(labelString, ":") == strings.Count(labelString, ";")+1 {
 		for _, v := range strings.Split(labelString, labelSeparator()) {

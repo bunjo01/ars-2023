@@ -66,7 +66,7 @@ func (con *GroupConfig) groupConfigToDBConfig() *DBConfig {
 func (con *DBConfig) dBToGroupConfig() *GroupConfig {
 	var rt GroupConfig
 	comb := strings.Split(con.Id, separator())
-	labels := mapLabels(comb[0])
+	labels := mapConfigLabels(comb[0])
 	rt.Labels = labels
 	rt.Id = comb[1]
 	rt.Entries = con.Entries
@@ -74,7 +74,7 @@ func (con *DBConfig) dBToGroupConfig() *GroupConfig {
 }
 
 func (con *DBConfig) compareLabels(labelString string) bool {
-	labels := mapLabels(labelString)
+	labels := mapConfigLabels(labelString)
 	confLabels := con.dBToGroupConfig().Labels
 	if len(labels) == len(confLabels) {
 		for k, _ := range labels {
