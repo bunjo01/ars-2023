@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-// swagger:route POST /config/ config createConfig
-// Add new config
+// swagger:route POST /config/ Configuration createConfig
+// Create new configuration
 //
 // responses:
 //
@@ -29,26 +29,32 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 		return
 	}
 	ts.data[el.Id] = el
-	renderJSON(w, el)
+	renderJSON(w, el.dBConfigToFree())
 }
 
-// swagger:route GET /config/all/ config getAllConfigs
-// Get all configs
+// swagger:route GET /config/all/ Configuration getAllConfigs
+// Get all configurations
 //
 // responses:
 //
 //	404: ErrorResponse
+//	418: Teapot
 //	200: []FreeConfig
 func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []*FreeConfig{}
 	for _, v := range ts.data {
 		allTasks = append(allTasks, v.dBConfigToFree())
 	}
-	renderJSON(w, allTasks)
+	if len(allTasks) == 0 {
+		throwTeapot(w)
+	} else {
+		renderJSON(w, allTasks)
+	}
+
 }
 
-// swagger:route GET /config/{id}/ config getAllConfigVersions
-// Get all configs versions
+// swagger:route GET /config/{id}/all/ Configuration getAllConfigVersions
+// Get all configuration versions
 //
 // responses:
 //
@@ -62,11 +68,15 @@ func (ts *dbServerConfig) getConfigVersionsHandler(w http.ResponseWriter, req *h
 			allTasks = append(allTasks, conf)
 		}
 	}
-	renderJSON(w, allTasks)
+	if len(allTasks) == 0 {
+		throwNotFoundError(w)
+	} else {
+		renderJSON(w, allTasks)
+	}
 }
 
-// swagger:route GET /config/{id}/{version}/ config getConfig
-// Get config
+// swagger:route GET /config/{id}/{version}/ Configuration getConfig
+// Get specific configuration
 //
 // responses:
 //
@@ -82,8 +92,8 @@ func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Requ
 	renderJSON(w, task.dBConfigToFree())
 }
 
-// swagger:route DELETE /config/{id}/all/ config deleteConfigVersions
-// Delete configs
+// swagger:route DELETE /config/{id}/all/ Configuration deleteConfigVersions
+// Delete all configuration versions
 //
 // responses:
 //
@@ -106,8 +116,8 @@ func (ts *dbServerConfig) delConfigVersionsHandler(w http.ResponseWriter, req *h
 	}
 }
 
-// swagger:route DELETE /config/{id}/{version}/ config deleteConfig
-// Delete config
+// swagger:route DELETE /config/{id}/{version}/ Configuration deleteConfig
+// Delete specific configuration
 //
 // responses:
 //

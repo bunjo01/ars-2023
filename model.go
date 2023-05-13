@@ -1,13 +1,7 @@
 package main
 
-// swagger: model DBConfig
 type DBConfig struct {
-	// Id of the config
-	// in: string
-	Id string `json:"id"`
-
-	// Entries map of config options
-	// in: map[string]*string
+	Id      string             `json:"id"`
 	Entries map[string]*string `json:"entries"`
 }
 
@@ -26,7 +20,7 @@ type GroupConfigList struct {
 	Configs map[string]*GroupConfig `json:"configs,string"`
 }
 
-// swagger: model FreeConfig
+// FreeConfig swagger: model FreeConfig
 type FreeConfig struct {
 	// Id of the config
 	// in: string

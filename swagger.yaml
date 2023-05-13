@@ -1,7 +1,7 @@
 basePath: /
 definitions:
     FreeConfig:
-        description: 'swagger: model FreeConfig'
+        description: 'FreeConfig swagger: model FreeConfig'
         properties:
             entries:
                 additionalProperties:
@@ -32,7 +32,7 @@ info:
 paths:
     /config/:
         post:
-            description: Add new config
+            description: Create new configuration
             operationId: createConfig
             parameters:
                 - description: 'name: body'
@@ -52,26 +52,28 @@ paths:
                 "415":
                     $ref: '#/responses/ErrorResponse'
             tags:
-                - config
-    /config/{id}/:
-        get:
-            description: Get all configs versions
-            operationId: getAllConfigVersions
-            responses:
-                "200":
-                    description: FreeConfig
-                    schema:
-                        items:
-                            $ref: '#/definitions/FreeConfig'
-                        type: array
-                "404":
-                    $ref: '#/responses/ErrorResponse'
-            tags:
-                - config
+                - Configuration
     /config/{id}/{version}/:
         delete:
-            description: Delete config
+            description: Delete specific configuration
             operationId: deleteConfig
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Config ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+                - description: |-
+                    name: Version
+                    description: Config description
+                  in: path
+                  name: version
+                  required: true
+                  type: string
+                  x-go-name: Version
             responses:
                 "201":
                     description: FreeConfig
@@ -80,10 +82,27 @@ paths:
                 "404":
                     $ref: '#/responses/ErrorResponse'
             tags:
-                - config
+                - Configuration
         get:
-            description: Get config
+            description: Get specific configuration
             operationId: getConfig
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Config ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+                - description: |-
+                    name: Version
+                    description: Config description
+                  in: path
+                  name: version
+                  required: true
+                  type: string
+                  x-go-name: Version
             responses:
                 "200":
                     description: FreeConfig
@@ -92,11 +111,20 @@ paths:
                 "404":
                     $ref: '#/responses/ErrorResponse'
             tags:
-                - config
+                - Configuration
     /config/{id}/all/:
         delete:
-            description: Delete configs
+            description: Delete all configuration versions
             operationId: deleteConfigVersions
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Config ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
             responses:
                 "201":
                     description: FreeConfig
@@ -107,10 +135,33 @@ paths:
                 "404":
                     $ref: '#/responses/ErrorResponse'
             tags:
-                - config
+                - Configuration
+        get:
+            description: Get all configuration versions
+            operationId: getAllConfigVersions
+            parameters:
+                - description: |-
+                    name: ID
+                    description: Config ID
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Id
+            responses:
+                "200":
+                    description: FreeConfig
+                    schema:
+                        items:
+                            $ref: '#/definitions/FreeConfig'
+                        type: array
+                "404":
+                    $ref: '#/responses/ErrorResponse'
+            tags:
+                - Configuration
     /config/all/:
         get:
-            description: Get all configs
+            description: Get all configurations
             operationId: getAllConfigs
             responses:
                 "200":
@@ -121,32 +172,13 @@ paths:
                         type: array
                 "404":
                     $ref: '#/responses/ErrorResponse'
+                "418":
+                    $ref: '#/responses/Teapot'
             tags:
-                - config
+                - Configuration
 produces:
     - application/json
 responses:
-    ConfigResponse:
-        description: ""
-        headers:
-            entries:
-                description: |-
-                    Entries map of config options
-                    in: map[string]*string
-            id:
-                description: |-
-                    Id of the config
-                    in: string
-                type: string
-            version:
-                description: |-
-                    Version of the config
-                    in: string
-                type: string
-        schema:
-            additionalProperties:
-                type: string
-            type: object
     ErrorResponse:
         description: ""
         headers:
@@ -161,8 +193,20 @@ responses:
                     in: int64
                 format: int64
                 type: integer
-    NoContentResponse:
+    Teapot:
         description: ""
+        headers:
+            message:
+                description: |-
+                    Message of the error
+                    in: string
+                type: string
+            status:
+                description: |-
+                    Error status code
+                    in: int64
+                format: int64
+                type: integer
 schemes:
     - http
 swagger: "2.0"

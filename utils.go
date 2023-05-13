@@ -35,13 +35,18 @@ func labelSeparator() string {
 }
 
 func throwNotFoundError(w http.ResponseWriter) {
-	err := errors.New("id not found")
+	err := errors.New("ID not found")
 	http.Error(w, err.Error(), http.StatusNotFound)
 }
 
 func throwForbiddenError(w http.ResponseWriter) {
 	err := errors.New("already exists")
 	http.Error(w, err.Error(), http.StatusForbidden)
+}
+
+func throwTeapot(w http.ResponseWriter) {
+	err := errors.New("The server refuses the attempt to brew coffee with a teapot.")
+	http.Error(w, err.Error(), http.StatusTeapot)
 }
 
 func checkRequest(req *http.Request, w http.ResponseWriter) {
