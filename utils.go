@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"mime"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -66,7 +67,8 @@ func checkRequest(req *http.Request, w http.ResponseWriter) {
 
 func mapConfigLabels(labelString string) map[string]*string {
 	labels := make(map[string]*string)
-	if strings.Contains(labelString, ":") && len(labelString) > 1 && strings.Count(labelString, ":") == strings.Count(labelString, ";")+1 {
+	reg := regexp.MustCompile("(([^;: ]+:[^;: ]+)(;([^;: ]+:[^;: ]+))*)")
+	if reg.MatchString(labelString) {
 		for _, v := range strings.Split(labelString, labelSeparator()) {
 			en := strings.Split(v, ":")
 			labels[en[0]] = &en[1]
