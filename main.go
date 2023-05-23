@@ -13,6 +13,7 @@
 package main
 
 import (
+	cdb "ars-2023/configdatabase"
 	"context"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
@@ -66,6 +67,8 @@ func main() {
 	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
 	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
 	router.Handle("/docs", developerDocumentationHandler)
+
+	cdb.TestKeys()
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

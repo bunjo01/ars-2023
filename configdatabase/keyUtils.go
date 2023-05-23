@@ -3,6 +3,7 @@ package configdatabase
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"log"
 )
 
 const (
@@ -27,4 +28,11 @@ func generateGroupKey(version string, labels string) (string, string, string) {
 
 func constructGroupKey(idGroup string, version string, labels string, idConfig string) string {
 	return fmt.Sprintf(group, idGroup, version, labels, idConfig)
+}
+
+func TestKeys() {
+	log.Println(generateConfigKey("version"))
+	log.Println(constructConfigKey("id", "version"))
+	log.Println(generateGroupKey("version", "labels"))
+	log.Println(constructGroupKey("idGroup", "version", "labels", "idConfig"))
 }
