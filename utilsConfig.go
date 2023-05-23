@@ -1,16 +1,17 @@
 package main
 
 import (
+	cs "ars-2023/configdatabase"
 	"encoding/json"
 	"io"
 	"strings"
 )
 
-func decodeFreeConfig(r io.Reader) (*FreeConfig, error) {
+func decodeFreeConfig(r io.Reader) (*cs.FreeConfig, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var rt FreeConfig
+	var rt cs.FreeConfig
 	if err := dec.Decode(&rt); err != nil {
 		return nil, err
 	}

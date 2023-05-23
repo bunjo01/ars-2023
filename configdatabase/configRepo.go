@@ -2,8 +2,10 @@ package configdatabase
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/consul/api"
+	"log"
 	"os"
 )
 
@@ -46,7 +48,7 @@ func (ps *ConfigStore) GetConfig(id string, version string) ([]*FreeConfig, erro
 func (ps *ConfigStore) GetConfigVersions(id string) ([]*FreeConfig, error) {
 	kv := ps.cli.KV()
 
-	data, _, err := kv.List(id, nil)
+	data, _, err := kv.List("config/"+id+"/", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -85,17 +87,18 @@ func (ps *ConfigStore) GetAll() ([]*FreeConfig, error) {
 
 func (ps *ConfigStore) DeleteConfig(id string, version string) (map[string]string, error) {
 	kv := ps.cli.KV()
-	_, err := kv.DeleteTree(constructConfigKey(id, version), nil)
+	w, err := kv.Delete(constructConfigKey(id, version), nil)
 	if err != nil {
 		return nil, err
 	}
+	log.Println(w)
 
 	return map[string]string{"Deleted": id}, nil
 }
 
 func (ps *ConfigStore) DeleteConfigVersions(id string) (map[string]string, error) {
 	kv := ps.cli.KV()
-	_, err := kv.DeleteTree(id, nil)
+	_, err := kv.DeleteTree("config/"+id+"/", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +110,20 @@ func (ps *ConfigStore) Config(config *FreeConfig) (*FreeConfig, error) {
 	kv := ps.cli.KV()
 
 	sid, rid := generateConfigKey(config.Version)
+
+	staticId := config.Id
+	if staticId == "1234" {
+		static := constructConfigKey(staticId, config.Version)
+		rid = staticId
+		sid = static
+	}
+
+	val, _, err := kv.Get(sid, nil)
+
+	if val != nil {
+		return nil, errors.New("DESI POŠO GARIŠON")
+	}
+
 	config.Id = rid
 
 	data, err := json.Marshal(config)

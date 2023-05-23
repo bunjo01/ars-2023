@@ -38,11 +38,14 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	server := dbServerConfig{
-		data:      map[string]*DBConfig{},
-		dataGroup: map[string]*DBGroup{},
+	store, err := cdb.New()
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	server := configServer{
+		store: store,
+	}
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	router.HandleFunc("/config/all/", server.getAllConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/all/", server.getConfigVersionsHandler).Methods("GET")
@@ -50,18 +53,18 @@ func main() {
 	router.HandleFunc("/config/{id}/{version}/", server.getConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
 
-	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
-	router.HandleFunc("/group/all/", server.getAllGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/all/", server.getGroupVersionsHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/all/", server.delGroupVersionsHandler).Methods("DELETE")
-	router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
-	router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
-
-	router.HandleFunc("/group/{id}/{version}/{labels}/", server.getConfigsByLabel).Methods("GET")
-	router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", server.delConfigsByLabel).Methods("DELETE")
-
-	router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
+	//router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
+	//router.HandleFunc("/group/all/", server.getAllGroupHandler).Methods("GET")
+	//router.HandleFunc("/group/{id}/all/", server.getGroupVersionsHandler).Methods("GET")
+	//router.HandleFunc("/group/{id}/all/", server.delGroupVersionsHandler).Methods("DELETE")
+	//router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
+	//router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
+	//router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
+	//
+	//router.HandleFunc("/group/{id}/{version}/{labels}/", server.getConfigsByLabel).Methods("GET")
+	//router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", server.delConfigsByLabel).Methods("DELETE")
+	//
+	//router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
 
 	// SwaggerUI
 	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
