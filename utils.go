@@ -4,43 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"io"
 	"mime"
 	"net/http"
+	"regexp"
+	"strings"
 )
-
-func decodeBody(r io.Reader) (*Config, error) {
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var rt Config
-	if err := dec.Decode(&rt); err != nil {
-		return nil, err
-	}
-	return &rt, nil
-
-}
-func decodeGroupBody(r io.Reader) (*Group, error) {
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var rt Group
-	if err := dec.Decode(&rt); err != nil {
-		return nil, err
-	}
-	return &rt, nil
-}
-
-func decodeAppendBody(r io.Reader) (*DTOConfig, error) {
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var rt DTOConfig
-	if err := dec.Decode(&rt); err != nil {
-		return nil, err
-	}
-	return &rt, nil
-}
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
 	js, err := json.Marshal(v)
@@ -53,13 +21,34 @@ func renderJSON(w http.ResponseWriter, v interface{}) {
 	w.Write(js)
 }
 
-func createId() string {
-	return uuid.New().String()
+func createId(id string) string {
+	ret := uuid.New().String()
+	staticId := id
+	if staticId == "1234" {
+		ret = staticId
+	}
+	return ret
+}
+func separator() string {
+	return "|"
+}
+func labelSeparator() string {
+	return ";"
 }
 
 func throwNotFoundError(w http.ResponseWriter) {
-	err := errors.New("id not found")
+	err := errors.New("ID not found")
 	http.Error(w, err.Error(), http.StatusNotFound)
+}
+
+func throwForbiddenError(w http.ResponseWriter) {
+	err := errors.New("already exists")
+	http.Error(w, err.Error(), http.StatusForbidden)
+}
+
+func throwTeapot(w http.ResponseWriter) {
+	err := errors.New("The server refuses the attempt to brew coffee with a teapot.")
+	http.Error(w, err.Error(), http.StatusTeapot)
 }
 
 func checkRequest(req *http.Request, w http.ResponseWriter) {
@@ -74,4 +63,24 @@ func checkRequest(req *http.Request, w http.ResponseWriter) {
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
+}
+
+func mapConfigLabels(labelString string) map[string]*string {
+	labels := make(map[string]*string)
+	reg := regexp.MustCompile("(([^;: ]+:[^;: ]+)(;([^;: ]+:[^;: ]+))*)")
+	if reg.MatchString(labelString) {
+		for _, v := range strings.Split(labelString, labelSeparator()) {
+			en := strings.Split(v, ":")
+			labels[en[0]] = &en[1]
+		}
+		return labels
+	} else {
+		badMap := "bad_label"
+		labels["403"] = &badMap
+		return labels
+	}
+}
+
+func (ts *dbServerConfig) swaggerHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./swagger.yaml")
 }

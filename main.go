@@ -1,7 +1,20 @@
+// Config Service API
+//
+//	   Title: Config Service API
+//
+//	   Schemes: http
+//		  Version: 0.0.1
+//		  BasePath: /
+//
+//		  Produces:
+//			- application/json
+//
+// swagger:meta
 package main
 
 import (
 	"context"
+	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -12,8 +25,8 @@ import (
 )
 
 type dbServerConfig struct {
-	data      map[string]*Config
-	dataGroup map[string]*Group
+	data      map[string]*DBConfig
+	dataGroup map[string]*DBGroup
 }
 
 func main() {
@@ -25,23 +38,36 @@ func main() {
 	router.StrictSlash(true)
 
 	server := dbServerConfig{
-		data:      map[string]*Config{},
-		dataGroup: map[string]*Group{},
+		data:      map[string]*DBConfig{},
+		dataGroup: map[string]*DBGroup{},
 	}
 
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	router.HandleFunc("/config/all/", server.getAllConfigHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/all/", server.getConfigVersionsHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/all/", server.delConfigVersionsHandler).Methods("DELETE")
 	router.HandleFunc("/config/{id}/{version}/", server.getConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
 
 	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
-	router.HandleFunc("/group/{id}/{version}/", server.appendGroupHandler).Methods("POST")
 	router.HandleFunc("/group/all/", server.getAllGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/all/", server.getGroupVersionsHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/all/", server.delGroupVersionsHandler).Methods("DELETE")
 	router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
 
-	//init server
+	router.HandleFunc("/group/{id}/{version}/{labels}/", server.getConfigsByLabel).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", server.delConfigsByLabel).Methods("DELETE")
 
+	router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
+
+	// SwaggerUI
+	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
+	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
+	router.Handle("/docs", developerDocumentationHandler)
+
+	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
 	go func() {
 		log.Println("...server starting...")
