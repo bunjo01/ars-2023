@@ -13,4 +13,5 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 EXPOSE 8000
 COPY --from=builder /ars-2023/main .
+COPY ./swagger.yaml .
 CMD ["./main"]
