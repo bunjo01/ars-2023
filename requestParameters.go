@@ -24,18 +24,6 @@ type RequestGroupBody struct {
 	Body FreeGroup `json:"body"`
 }
 
-// swagger:parameters appendGroup
-type RequestAppendBody struct {
-	// - name: body
-	//  in: body
-	//  description: name and status
-	//  schema:
-	//  type: object
-	//     "$ref": "#/definitions/GroupConfigList"
-	//  required: true
-	Configs map[string]*GroupConfig `json:"configs,string"`
-}
-
 // swagger:parameters getAllConfigVersions getConfig deleteConfigVersions deleteConfig delConfigsByLabel
 // swagger:parameters getAllGroupVersions getGroup deleteGroup deleteGroupVersions appendGroup getConfigsByLabel
 type EntityId struct {

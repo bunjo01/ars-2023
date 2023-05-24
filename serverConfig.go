@@ -1,9 +1,14 @@
 package main
 
 import (
+	cs "ars-2023/configdatabase"
 	"github.com/gorilla/mux"
 	"net/http"
 )
+
+type configServer struct {
+	store *cs.ConfigStore
+}
 
 // swagger:route POST /config/ Configuration createConfig
 // Create new configuration
@@ -13,7 +18,7 @@ import (
 //	415: ErrorResponse
 //	400: ErrorResponse
 //	201: FreeConfig
-func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *configServer) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 	checkRequest(req, w)
 
 	rt, err := decodeFreeConfig(req.Body)
@@ -21,15 +26,13 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	id := createId(rt.Id)
-	rt.Id = id
-	el := rt.freeToDBConfig()
-	if ts.data[el.Id] != nil {
-		throwForbiddenError(w)
+
+	config, err := ts.store.Config(rt)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ts.data[el.Id] = el
-	renderJSON(w, el.dBConfigToFree())
+	renderJSON(w, config)
 }
 
 // swagger:route GET /config/all/ Configuration getAllConfigs
@@ -40,17 +43,13 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 //	404: ErrorResponse
 //	418: Teapot
 //	200: []FreeConfig
-func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*FreeConfig{}
-	for _, v := range ts.data {
-		allTasks = append(allTasks, v.dBConfigToFree())
+func (ts *configServer) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
+	allTasks, err := ts.store.GetAllConfigs()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	if len(allTasks) == 0 {
-		throwTeapot(w)
-	} else {
-		renderJSON(w, allTasks)
-	}
-
+	renderJSON(w, allTasks)
 }
 
 // swagger:route GET /config/{id}/all/ Configuration getAllConfigVersions
@@ -60,19 +59,14 @@ func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.R
 //
 //	404: ErrorResponse
 //	200: []FreeConfig
-func (ts *dbServerConfig) getConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*FreeConfig{}
-	for _, v := range ts.data {
-		conf := v.dBConfigToFree()
-		if conf.Id == mux.Vars(req)["id"] {
-			allTasks = append(allTasks, conf)
-		}
+func (ts *configServer) getConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	task, err := ts.store.GetConfigVersions(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	if len(allTasks) == 0 {
-		throwNotFoundError(w)
-	} else {
-		renderJSON(w, allTasks)
-	}
+	renderJSON(w, task)
 }
 
 // swagger:route GET /config/{id}/{version}/ Configuration getConfig
@@ -82,14 +76,15 @@ func (ts *dbServerConfig) getConfigVersionsHandler(w http.ResponseWriter, req *h
 //
 //	404: ErrorResponse
 //	200: FreeConfig
-func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
-	task, ok := ts.data[id]
-	if !ok {
-		throwNotFoundError(w)
+func (ts *configServer) getConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	task, err := ts.store.GetConfig(id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	renderJSON(w, task.dBConfigToFree())
+	renderJSON(w, task)
 }
 
 // swagger:route DELETE /config/{id}/all/ Configuration deleteConfigVersions
@@ -99,18 +94,17 @@ func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Requ
 //
 //	404: ErrorResponse
 //	201: []FreeConfig
-func (ts *dbServerConfig) delConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *configServer) delConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	allTasks := []*FreeConfig{}
-	for _, v := range ts.data {
-		conf := v.dBConfigToFree()
-		if conf.Id == id {
-			allTasks = append(allTasks, conf)
-			delete(ts.data, v.Id)
-		}
+
+	task, err := ts.store.DeleteConfigVersions(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	if len(allTasks) > 0 {
-		renderJSON(w, allTasks)
+
+	if len(task) > 0 {
+		renderJSON(w, task)
 	} else {
 		throwNotFoundError(w)
 	}
@@ -123,12 +117,13 @@ func (ts *dbServerConfig) delConfigVersionsHandler(w http.ResponseWriter, req *h
 //
 //	404: ErrorResponse
 //	201: FreeConfig
-func (ts *dbServerConfig) delConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
-	if v, ok := ts.data[id]; ok {
-		delete(ts.data, id)
-		renderJSON(w, v.dBConfigToFree())
-	} else {
-		throwNotFoundError(w)
+func (ts *configServer) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	msg, err := ts.store.DeleteConfig(id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+	renderJSON(w, msg)
 }

@@ -1,14 +1,38 @@
 package main
 
 import (
+	cs "ars-2023/configdatabase"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
+	"io"
 	"mime"
 	"net/http"
-	"regexp"
-	"strings"
 )
+
+// JSON decoders
+
+func decodeFreeConfig(r io.Reader) (*cs.FreeConfig, error) {
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+
+	var rt cs.FreeConfig
+	if err := dec.Decode(&rt); err != nil {
+		return nil, err
+	}
+	return &rt, nil
+}
+func decodeFreeGroup(r io.Reader) (*cs.FreeGroup, error) {
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+
+	var rt cs.FreeGroup
+	if err := dec.Decode(&rt); err != nil {
+		return nil, err
+	}
+	return &rt, nil
+}
+
+// JSON render
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
 	js, err := json.Marshal(v)
@@ -21,20 +45,10 @@ func renderJSON(w http.ResponseWriter, v interface{}) {
 	w.Write(js)
 }
 
-func createId(id string) string {
-	ret := uuid.New().String()
-	staticId := id
-	if staticId == "1234" {
-		ret = staticId
-	}
-	return ret
-}
-func separator() string {
-	return "|"
-}
-func labelSeparator() string {
-	return ";"
-}
+// TODO implement into repos instead of staticId block
+// ID generator for static IDs
+
+// Errors
 
 func throwNotFoundError(w http.ResponseWriter) {
 	err := errors.New("ID not found")
@@ -51,6 +65,8 @@ func throwTeapot(w http.ResponseWriter) {
 	http.Error(w, err.Error(), http.StatusTeapot)
 }
 
+// Http request validator
+
 func checkRequest(req *http.Request, w http.ResponseWriter) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
@@ -65,22 +81,8 @@ func checkRequest(req *http.Request, w http.ResponseWriter) {
 	}
 }
 
-func mapConfigLabels(labelString string) map[string]*string {
-	labels := make(map[string]*string)
-	reg := regexp.MustCompile("(([^;: ]+:[^;: ]+)(;([^;: ]+:[^;: ]+))*)")
-	if reg.MatchString(labelString) {
-		for _, v := range strings.Split(labelString, labelSeparator()) {
-			en := strings.Split(v, ":")
-			labels[en[0]] = &en[1]
-		}
-		return labels
-	} else {
-		badMap := "bad_label"
-		labels["403"] = &badMap
-		return labels
-	}
-}
+// Swagger routing handler
 
-func (ts *dbServerConfig) swaggerHandler(w http.ResponseWriter, r *http.Request) {
+func (ts *configServer) swaggerHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./swagger.yaml")
 }

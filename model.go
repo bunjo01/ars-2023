@@ -1,15 +1,5 @@
 package main
 
-type DBConfig struct {
-	Id      string             `json:"id"`
-	Entries map[string]*string `json:"entries"`
-}
-
-type DBGroup struct {
-	Id      string               `json:"id"`
-	Configs map[string]*DBConfig `json:"configs"`
-}
-
 // FreeGroup swagger: model FreeGroup
 type FreeGroup struct {
 	// Id of the group
@@ -23,13 +13,6 @@ type FreeGroup struct {
 	// Entries map of configs
 	// in: map[string]*GroupConfig
 	Configs map[string]*GroupConfig `json:"configs"`
-}
-
-// GroupConfigList swagger: model GroupConfigList
-type GroupConfigList struct {
-	// Entries map of configs
-	// in: map[string]*GroupConfig
-	Configs map[string]*GroupConfig `json:"configs,string"`
 }
 
 // FreeConfig swagger: model FreeConfig
