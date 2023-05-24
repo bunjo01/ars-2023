@@ -3,27 +3,8 @@ package configdatabase
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/hashicorp/consul/api"
-	"log"
-	"os"
 )
-
-func New() (*ConfigStore, error) {
-	db := os.Getenv("DB")
-	dbport := os.Getenv("DBPORT")
-
-	config := api.DefaultConfig()
-	config.Address = fmt.Sprintf("%s:%s", db, dbport)
-	client, err := api.NewClient(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ConfigStore{
-		cli: client,
-	}, nil
-}
 
 func (ps *ConfigStore) GetConfig(id string, version string) ([]*FreeConfig, error) {
 	kv := ps.cli.KV()
@@ -65,7 +46,7 @@ func (ps *ConfigStore) GetConfigVersions(id string) ([]*FreeConfig, error) {
 	return configs, nil
 }
 
-func (ps *ConfigStore) GetAll() ([]*FreeConfig, error) {
+func (ps *ConfigStore) GetAllConfigs() ([]*FreeConfig, error) {
 	kv := ps.cli.KV()
 	data, _, err := kv.List("config/", nil)
 	if err != nil {
@@ -87,11 +68,10 @@ func (ps *ConfigStore) GetAll() ([]*FreeConfig, error) {
 
 func (ps *ConfigStore) DeleteConfig(id string, version string) (map[string]string, error) {
 	kv := ps.cli.KV()
-	w, err := kv.Delete(constructConfigKey(id, version), nil)
+	_, err := kv.Delete(constructConfigKey(id, version), nil)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(w)
 
 	return map[string]string{"Deleted": id}, nil
 }

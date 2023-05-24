@@ -25,11 +25,6 @@ import (
 	"time"
 )
 
-type dbServerConfig struct {
-	data      map[string]*DBConfig
-	dataGroup map[string]*DBGroup
-}
-
 func main() {
 
 	quit := make(chan os.Signal)
@@ -53,25 +48,23 @@ func main() {
 	router.HandleFunc("/config/{id}/{version}/", server.getConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
 
-	//router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
+	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
 	//router.HandleFunc("/group/all/", server.getAllGroupHandler).Methods("GET")
-	//router.HandleFunc("/group/{id}/all/", server.getGroupVersionsHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/all/", server.getGroupVersionsHandler).Methods("GET")
 	//router.HandleFunc("/group/{id}/all/", server.delGroupVersionsHandler).Methods("DELETE")
-	//router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
 	//router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
 	//router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
 	//
 	//router.HandleFunc("/group/{id}/{version}/{labels}/", server.getConfigsByLabel).Methods("GET")
 	//router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", server.delConfigsByLabel).Methods("DELETE")
 	//
-	//router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
+	router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
 
 	// SwaggerUI
 	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
 	developerDocumentationHandler := middleware.SwaggerUI(optionsDevelopers, nil)
 	router.Handle("/docs", developerDocumentationHandler)
-
-	cdb.TestKeys()
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

@@ -44,7 +44,7 @@ func (ts *configServer) createConfigHandler(w http.ResponseWriter, req *http.Req
 //	418: Teapot
 //	200: []FreeConfig
 func (ts *configServer) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks, err := ts.store.GetAll()
+	allTasks, err := ts.store.GetAllConfigs()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
