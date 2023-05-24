@@ -190,16 +190,12 @@ func (ts *configServer) delConfigsByLabel(w http.ResponseWriter, req *http.Reque
 	id := mux.Vars(req)["id"]
 	version := mux.Vars(req)["version"]
 	labels := mux.Vars(req)["labels"]
+	newVersion := mux.Vars(req)["new"]
 
-	task, err := ts.store.DeleteConfigsByLabels(id, version, labels)
+	task, err := ts.store.DeleteConfigsByLabels(id, version, labels, newVersion)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if len(task) > 0 {
-		renderJSON(w, task)
-	} else {
-		throwNotFoundError(w)
-	}
-
+	renderJSON(w, task)
 }

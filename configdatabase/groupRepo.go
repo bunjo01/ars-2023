@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
+	"log"
 )
 
 //getAllGroupHandler
@@ -108,16 +109,36 @@ func (ps *ConfigStore) GetAllGroups() ([]*FreeGroup, error) {
 
 func (ps *ConfigStore) DeleteGroup(id, version string) (map[string]string, error) {
 	kv := ps.cli.KV()
-	_, err := kv.DeleteTree(generateCustomKey([]string{id, version}, "group/"), nil)
+	keys, _, err := kv.Keys(generateCustomKey([]string{id, version}, "group/"), "", nil)
 	if err != nil {
 		return nil, err
 	}
-	return map[string]string{"Deleted": id}, nil
+	for _, k := range keys {
+		log.Println(k + "----------------------------- key")
+		_, err = kv.Delete(k, nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{"Deleted": id + "/" + version}, nil
 }
 
 func (ps *ConfigStore) DeleteGroupVersions(id string) (map[string]string, error) {
 	kv := ps.cli.KV()
-	_, err := kv.DeleteTree(generateCustomKey([]string{id}, "group/"), nil)
+	keys, _, err := kv.Keys(generateCustomKey([]string{id}, "group/"), "", nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, k := range keys {
+		log.Println(k + "----------------------------- key")
+		_, err = kv.Delete(k, nil)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -145,18 +166,61 @@ func (ps *ConfigStore) Group(group *FreeGroup) (*FreeGroup, error) {
 	return group, nil
 }
 
-func (ps *ConfigStore) DeleteConfigsByLabels(id, version, labels string) (map[string]string, error) {
+func (ps *ConfigStore) DeleteConfigsByLabels(id, version, labels, newVersion string) (*FreeGroup, error) {
 	kv := ps.cli.KV()
-	_, err := kv.DeleteTree(generateCustomKey([]string{id, version, labels}, "group/"), nil)
+	allKeys, _, err := kv.Keys(generateCustomKey([]string{id, version}, "group/"), "", nil)
 	if err != nil {
 		return nil, err
 	}
-	return map[string]string{"Deleted": id}, nil
+	matchKeys, _, er := kv.Keys(generateCustomKey([]string{id, version, labels}, "group/")+"/", "", nil)
+	if er != nil {
+		return nil, err
+	}
+	keyList := []string{}
+	for _, key := range allKeys {
+		flag := false
+		for _, ky := range matchKeys {
+			log.Println(key + "-----------------------------" + ky)
+			if ky == key {
+				flag = true
+			}
+
+		}
+		log.Println(".")
+		log.Println(".")
+		log.Println(".")
+		log.Println(".")
+		log.Println(".")
+		if !flag {
+			log.Println(key)
+			keyList = append(keyList, key)
+		}
+	}
+	ret := &FreeGroup{}
+	ret.Id = id
+	ret.Version = newVersion
+	ret.Configs = make(map[string]*GroupConfig)
+	for _, key := range keyList {
+		config := &GroupConfig{}
+		conf, _, err := kv.Get(key, nil)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(conf.Value, config)
+		if err != nil {
+			return nil, err
+		}
+		ret.Configs[config.Id] = config
+	}
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 func (ps *ConfigStore) GetConfigsByLabels(id, version, labels string) (*FreeGroup, error) {
 	kv := ps.cli.KV()
-	key := generateCustomKey([]string{id, version, labels}, "group/")
+	key := generateCustomKey([]string{id, version, labels}, "group/") + "/"
 	data, _, err := kv.List(key, nil)
 
 	if err != nil {
@@ -196,4 +260,3 @@ func (ps *ConfigStore) AppendGroup(group *FreeGroup) (*FreeGroup, error) {
 	}
 	return group, nil
 }
-
