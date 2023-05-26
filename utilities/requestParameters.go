@@ -1,4 +1,8 @@
-package main
+package utilities
+
+import (
+	cbd "ars-2023/configdatabase"
+)
 
 // swagger:parameters createConfig
 type RequestConfigBody struct {
@@ -9,7 +13,7 @@ type RequestConfigBody struct {
 	//  type: object
 	//     "$ref": "#/definitions/FreeConfig"
 	//  required: true
-	Body FreeConfig `json:"body"`
+	Body cbd.FreeConfig `json:"body"`
 }
 
 // swagger:parameters createGroup
@@ -21,7 +25,7 @@ type RequestGroupBody struct {
 	//  type: object
 	//     "$ref": "#/definitions/FreeGroup"
 	//  required: true
-	Body FreeGroup `json:"body"`
+	Body cbd.FreeGroup `json:"body"`
 }
 
 // swagger:parameters getAllConfigVersions getConfig deleteConfigVersions deleteConfig delConfigsByLabel

@@ -1,6 +1,7 @@
 package main
 
 import (
+	util "ars-2023/utilities"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -14,19 +15,19 @@ import (
 //	400: ErrorResponse
 //	201: FreeGroup
 func (ts *configServer) createGroupHandler(w http.ResponseWriter, req *http.Request) {
-	checkRequest(req, w)
+	util.CheckRequest(req, w)
 
-	rt, err := decodeFreeGroup(req.Body)
+	rt, err := util.DecodeFreeGroup(req.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
-	group, err := ts.store.Group(rt)
+	group, err := ts.store.Group(rt, true)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
-	renderJSON(w, group)
+	util.RenderJSON(w, group)
 }
 
 // swagger:route GET /group/all/ Group getAllGroups
@@ -34,19 +35,20 @@ func (ts *configServer) createGroupHandler(w http.ResponseWriter, req *http.Requ
 //
 // responses:
 //
-//	404: ErrorResponse
+//	400: ErrorResponse
 //	418: Teapot
 //	200: []FreeGroup
 func (ts *configServer) getAllGroupHandler(w http.ResponseWriter, req *http.Request) {
 	task, err := ts.store.GetAllGroups()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
 	if len(task) > 0 {
-		renderJSON(w, task)
+		util.RenderJSON(w, task)
 	} else {
-		throwNotFoundError(w)
+		util.ThrowTeapot(w)
+		return
 	}
 }
 
@@ -60,14 +62,11 @@ func (ts *configServer) getAllGroupHandler(w http.ResponseWriter, req *http.Requ
 func (ts *configServer) getGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	task, err := ts.store.GetGroupVersions(id)
-	if err != nil {
-		throwNotFoundError(w)
+	if err != nil || len(task) < 1 {
+		util.ThrowNotFoundError(w)
+		return
 	}
-	if len(task) > 0 {
-		renderJSON(w, task)
-	} else {
-		throwNotFoundError(w)
-	}
+	util.RenderJSON(w, task)
 }
 
 // swagger:route GET /group/{id}/{version}/ Group getGroup
@@ -82,9 +81,10 @@ func (ts *configServer) getGroupHandler(w http.ResponseWriter, req *http.Request
 	version := mux.Vars(req)["version"]
 	task, err := ts.store.GetGroup(id, version)
 	if err != nil {
-		throwNotFoundError(w)
+		util.ThrowNotFoundError(w)
+		return
 	}
-	renderJSON(w, task)
+	util.RenderJSON(w, task)
 }
 
 // swagger:route DELETE /group/{id}/all/ Group deleteGroupVersions
@@ -98,13 +98,14 @@ func (ts *configServer) delGroupVersionsHandler(w http.ResponseWriter, req *http
 	id := mux.Vars(req)["id"]
 	task, err := ts.store.DeleteGroupVersions(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
 	if len(task) > 0 {
-		renderJSON(w, task)
+		util.RenderJSON(w, task)
 	} else {
-		throwNotFoundError(w)
+		util.ThrowNotFoundError(w)
+		return
 	}
 }
 
@@ -120,13 +121,14 @@ func (ts *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request
 	version := mux.Vars(req)["version"]
 	task, err := ts.store.DeleteGroup(id, version)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
 	if len(task) > 0 {
-		renderJSON(w, task)
+		util.RenderJSON(w, task)
 	} else {
-		throwNotFoundError(w)
+		util.ThrowNotFoundError(w)
+		return
 	}
 }
 
@@ -141,19 +143,19 @@ func (ts *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request
 //	400: ErrorResponse
 //	201: FreeGroup
 func (ts *configServer) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
-	checkRequest(req, w)
+	util.CheckRequest(req, w)
 
-	rt, err := decodeFreeGroup(req.Body)
+	rt, err := util.DecodeFreeGroup(req.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
-	group, err := ts.store.Group(rt)
+	group, err := ts.store.Group(rt, false)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
-	renderJSON(w, group)
+	util.RenderJSON(w, group)
 }
 
 // swagger:route GET /group/{id}/{version}/{labels}/ Label getConfigsByLabel
@@ -170,11 +172,10 @@ func (ts *configServer) getConfigsByLabel(w http.ResponseWriter, req *http.Reque
 	labels := mux.Vars(req)["labels"]
 	task, err := ts.store.GetConfigsByLabels(id, version, labels)
 	if err != nil {
-		throwNotFoundError(w)
+		util.ThrowNotFoundError(w)
+		return
 	}
-
-	renderJSON(w, task)
-
+	util.RenderJSON(w, task)
 }
 
 // swagger:route DELETE /group/{id}/{version}/{new}/{labels}/ Label delConfigsByLabel
@@ -194,8 +195,8 @@ func (ts *configServer) delConfigsByLabel(w http.ResponseWriter, req *http.Reque
 
 	task, err := ts.store.DeleteConfigsByLabels(id, version, labels, newVersion)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		util.ThrowBadRequest(w)
 		return
 	}
-	renderJSON(w, task)
+	util.RenderJSON(w, task)
 }

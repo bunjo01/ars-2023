@@ -1,51 +1,28 @@
 package configdatabase
 
 import (
-	"fmt"
+	"errors"
 	"github.com/google/uuid"
-	"log"
+	"github.com/hashicorp/consul/api"
 	"sort"
 	"strings"
 )
 
-const (
-	// config/config_id/config_version
-	config = "config/%s/%s"
-	// group/group_id/group_version/labels/config_id
-	group = "group/%s/%s/%s/%s"
-)
+// config/config_id/config_version
+// group/group_id/group_version/labels/config_id
+
+// DB Key position enum
 
 type Position int
 
 const (
 	group_id      = 1
 	group_version = 2
-	group_labels  = 3
-	config_id     = 4
 )
 
-func generateConfigKey(version string) (string, string) {
-	id := uuid.New().String()
-	return fmt.Sprintf(config, id, version), id
-}
+// Generic db key generator for any entity
 
-func constructConfigKey(id, version string) string {
-	return fmt.Sprintf(config, id, version)
-}
-
-func generateGroupKey(version, labels string) (string, string, string) {
-	idGroup := uuid.New().String()
-	idConfig := uuid.New().String()
-	return fmt.Sprintf(group, idGroup, version, labels, idConfig), idGroup, idConfig
-}
-
-func constructGroupKey(idGroup, version, labels, idConfig string) string {
-	return fmt.Sprintf(group, idGroup, version, labels, idConfig)
-}
-
-// Generic key generator for any entity
-
-func generateCustomKey(params []string, info string) string {
+func dbKeyGen(info string, params ...string) string {
 	var sb strings.Builder
 	sb.WriteString(info)
 	for _, v := range params {
@@ -70,6 +47,18 @@ func generateLabelString(labels map[string]*string) string {
 	return l[:len(l)-1]
 }
 
+func sortLabels(labels string) string {
+	if strings.Contains(labels, ";") {
+		labs := strings.Split(labels, ";")
+		sort.Strings(labs)
+		labels = strings.Join(labs, ";")
+	}
+	return labels
+
+}
+
+// Static ID check for testing examples
+
 func CreateId(id string) string {
 	ret := uuid.New().String()
 	staticId := id
@@ -79,14 +68,23 @@ func CreateId(id string) string {
 	return ret
 }
 
+// Key information getter
+
 func getKeyIndexInfo(index Position, key string) string {
 	separated := strings.Split(key, "/")
 	return separated[index]
 }
 
-func TestKeys() {
-	log.Println(generateConfigKey("version"))
-	log.Println(constructConfigKey("id", "version"))
-	log.Println(generateGroupKey("version", "labels"))
-	log.Println(constructGroupKey("idGroup", "version", "labels", "idConfig"))
+//
+
+func checkConflict(info, id, version string, kv *api.KV) (bool, error) {
+	key := dbKeyGen(info, id, version)
+	val, _, err := kv.List(key, nil)
+	if err != nil {
+		return true, err
+	}
+	if (len(val) > 0 && info == "group") || (val != nil && info == "config") {
+		return true, errors.New("DESI POŠO GARIŠON")
+	}
+	return false, nil
 }

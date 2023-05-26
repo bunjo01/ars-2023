@@ -26,39 +26,41 @@ import (
 )
 
 func main() {
-
+	// Graceful shutdown
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-
+	// Router instance
 	router := mux.NewRouter()
 	router.StrictSlash(true)
-
+	// db api instance
 	store, err := cdb.New()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	// server instance
 	server := configServer{
 		store: store,
 	}
+	//Config operation handlers
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	router.HandleFunc("/config/all/", server.getAllConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/all/", server.getConfigVersionsHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/all/", server.delConfigVersionsHandler).Methods("DELETE")
 	router.HandleFunc("/config/{id}/{version}/", server.getConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
-	// TODO delete functions unexpected behavior
+	// Group operation handlers
 	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
 	router.HandleFunc("/group/all/", server.getAllGroupHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/all/", server.getGroupVersionsHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/all/", server.delGroupVersionsHandler).Methods("DELETE")
 	router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
+	// Group append handler
 	router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
-	//
+	// Label operations handlers
 	router.HandleFunc("/group/{id}/{version}/{labels}/", server.getConfigsByLabel).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", server.delConfigsByLabel).Methods("DELETE")
-	//
+	// Swagger handler
 	router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
 
 	// SwaggerUI
@@ -81,8 +83,8 @@ func main() {
 
 	log.Println("...server shutting down...")
 
-	//graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// Graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
