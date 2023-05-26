@@ -14,20 +14,20 @@ import (
 //	400: ErrorResponse
 //	201: FreeGroup
 func (cs *configServer) createGroupHandler(w http.ResponseWriter, req *http.Request) {
-	err := cs.CheckRequest(req, w)
+	err := cs.CheckRequest(req)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 
 	rt, err := DecodeFreeGroup(req.Body)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	group, err := cs.store.Group(rt, true)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, group)
@@ -44,13 +44,13 @@ func (cs *configServer) createGroupHandler(w http.ResponseWriter, req *http.Requ
 func (cs *configServer) getAllGroupHandler(w http.ResponseWriter, req *http.Request) {
 	task, err := cs.store.GetAllGroups()
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	if len(task) > 0 {
 		RenderJSON(w, task)
 	} else {
-		ThrowTeapot(w)
+		throwError(w, err)
 		return
 	}
 }
@@ -66,7 +66,7 @@ func (cs *configServer) getGroupVersionsHandler(w http.ResponseWriter, req *http
 	id := mux.Vars(req)["id"]
 	task, err := cs.store.GetGroupVersions(id)
 	if err != nil || len(task) < 1 {
-		ThrowNotFoundError(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, task)
@@ -84,7 +84,7 @@ func (cs *configServer) getGroupHandler(w http.ResponseWriter, req *http.Request
 	version := mux.Vars(req)["version"]
 	task, err := cs.store.GetGroup(id, version)
 	if err != nil {
-		ThrowNotFoundError(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, task)
@@ -101,13 +101,13 @@ func (cs *configServer) delGroupVersionsHandler(w http.ResponseWriter, req *http
 	id := mux.Vars(req)["id"]
 	task, err := cs.store.DeleteGroupVersions(id)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	if len(task) > 0 {
 		RenderJSON(w, task)
 	} else {
-		ThrowNotFoundError(w)
+		throwError(w, err)
 		return
 	}
 }
@@ -124,13 +124,13 @@ func (cs *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request
 	version := mux.Vars(req)["version"]
 	task, err := cs.store.DeleteGroup(id, version)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	if len(task) > 0 {
 		RenderJSON(w, task)
 	} else {
-		ThrowNotFoundError(w)
+		throwError(w, err)
 		return
 	}
 }
@@ -146,19 +146,19 @@ func (cs *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request
 //	400: ErrorResponse
 //	201: FreeGroup
 func (cs *configServer) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
-	err := cs.CheckRequest(req, w)
-	if err != nil {
-		ThrowBadRequest(w)
+	er := cs.CheckRequest(req)
+	if er != nil {
+		http.Error(w, er.Message, er.Status)
 		return
 	}
 	rt, err := DecodeFreeGroup(req.Body)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	group, err := cs.store.Group(rt, false)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, group)
@@ -178,7 +178,7 @@ func (cs *configServer) getConfigsByLabel(w http.ResponseWriter, req *http.Reque
 	labels := mux.Vars(req)["labels"]
 	task, err := cs.store.GetConfigsByLabels(id, version, labels)
 	if err != nil {
-		ThrowNotFoundError(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, task)
@@ -201,7 +201,7 @@ func (cs *configServer) delConfigsByLabel(w http.ResponseWriter, req *http.Reque
 
 	task, err := cs.store.DeleteConfigsByLabels(id, version, labels, newVersion)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, task)

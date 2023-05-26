@@ -14,19 +14,19 @@ import (
 //	400: ErrorResponse
 //	201: FreeConfig
 func (cs *configServer) createConfigHandler(w http.ResponseWriter, req *http.Request) {
-	err := cs.CheckRequest(req, w)
+	err := cs.CheckRequest(req)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	rt, err := DecodeFreeConfig(req.Body)
 	if err != nil {
-		ThrowBadRequest(w)
+		http.Error(w, err.Message, err.Status)
 		return
 	}
 	config, err := cs.store.Config(rt)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, config)
@@ -43,7 +43,7 @@ func (cs *configServer) createConfigHandler(w http.ResponseWriter, req *http.Req
 func (cs *configServer) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks, err := cs.store.GetAllConfigs()
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, allTasks)
@@ -60,7 +60,7 @@ func (cs *configServer) getConfigVersionsHandler(w http.ResponseWriter, req *htt
 	id := mux.Vars(req)["id"]
 	task, err := cs.store.GetConfigVersions(id)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, task)
@@ -78,7 +78,7 @@ func (cs *configServer) getConfigHandler(w http.ResponseWriter, req *http.Reques
 	version := mux.Vars(req)["version"]
 	task, err := cs.store.GetConfig(id, version)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, task)
@@ -95,13 +95,13 @@ func (cs *configServer) delConfigVersionsHandler(w http.ResponseWriter, req *htt
 	id := mux.Vars(req)["id"]
 	task, err := cs.store.DeleteConfigVersions(id)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	if len(task) > 0 {
 		RenderJSON(w, task)
 	} else {
-		ThrowNotFoundError(w)
+		throwError(w, err)
 		return
 	}
 }
@@ -118,7 +118,7 @@ func (cs *configServer) delConfigHandler(w http.ResponseWriter, req *http.Reques
 	version := mux.Vars(req)["version"]
 	msg, err := cs.store.DeleteConfig(id, version)
 	if err != nil {
-		ThrowBadRequest(w)
+		throwError(w, err)
 		return
 	}
 	RenderJSON(w, msg)

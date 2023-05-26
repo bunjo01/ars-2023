@@ -2,8 +2,8 @@ package main
 
 import (
 	cs "ars-2023/configdatabase"
+	er "ars-2023/errors"
 	"encoding/json"
-	"errors"
 	"io"
 	"mime"
 	"net/http"
@@ -18,21 +18,21 @@ type configServer struct {
 
 // JSON decoders
 
-func DecodeFreeConfig(r io.Reader) (*cs.FreeConfig, error) {
+func DecodeFreeConfig(r io.Reader) (*cs.FreeConfig, *er.ErrorResponse) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 	var rt cs.FreeConfig
 	if err := dec.Decode(&rt); err != nil {
-		return nil, err
+		return nil, er.NewError(400)
 	}
 	return &rt, nil
 }
-func DecodeFreeGroup(r io.Reader) (*cs.FreeGroup, error) {
+func DecodeFreeGroup(r io.Reader) (*cs.FreeGroup, *er.ErrorResponse) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 	var rt cs.FreeGroup
 	if err := dec.Decode(&rt); err != nil {
-		return nil, err
+		return nil, er.NewError(400)
 	}
 	return &rt, nil
 }
@@ -42,62 +42,50 @@ func DecodeFreeGroup(r io.Reader) (*cs.FreeGroup, error) {
 func RenderJSON(w http.ResponseWriter, v interface{}) {
 	js, err := json.Marshal(v)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		throwError(w, er.NewError(400))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }
 
-// Error throws
+// Errors
 
-func ThrowBadRequest(w http.ResponseWriter) {
-	err := errors.New("bad request")
-	http.Error(w, err.Error(), http.StatusBadRequest)
-}
-
-func ThrowNotFoundError(w http.ResponseWriter) {
-	err := errors.New("not found")
-	http.Error(w, err.Error(), http.StatusNotFound)
-}
-
-func ThrowTeapot(w http.ResponseWriter) {
-	err := errors.New("The server refuses the attempt to brew coffee with a teapot.")
-	http.Error(w, err.Error(), http.StatusTeapot)
+func throwError(w http.ResponseWriter, err *er.ErrorResponse) {
+	http.Error(w, err.Message, err.Status)
 }
 
 // Http request validator
 
-func (cs *configServer) CheckRequest(req *http.Request, w http.ResponseWriter) error {
-	ok, err := IsFirst(req, cs)
+func (cv *configServer) CheckRequest(req *http.Request) *er.ErrorResponse {
+	ok, err := IsFirst(req, cv)
 	if err != nil {
 		return err
 	}
-	if !ok {
+	if ok && err != nil {
 		return err
 	}
 	contentType := req.Header.Get("Content-Type")
-	mediaType, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		return err
+	mediaType, _, erro := mime.ParseMediaType(contentType)
+	if erro != nil {
+		return er.NewError(400)
 	}
 	if mediaType != "application/json" {
-		err := errors.New("expected application/json Content-type")
-		return err
+		return er.NewError(415)
 	}
 	return nil
 }
 
 // Idempotency check
 
-func IsFirst(req *http.Request, cs *configServer) (bool, error) {
+func IsFirst(req *http.Request, cv *configServer) (bool, *er.ErrorResponse) {
 	key := req.Header.Get("Idempotency-key")
 	if key == "" {
-		return false, errors.New("no key")
+		return false, er.NewError(418)
 	}
-	if cs.Keys[key] == "used" {
-		return false, errors.New("key conflict")
+	if cv.Keys[key] == "used" {
+		return true, er.NewError(409)
 	}
-	cs.Keys[key] = "used"
+	cv.Keys[key] = "used"
 	return true, nil
 }

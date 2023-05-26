@@ -1,7 +1,7 @@
 package configdatabase
 
 import (
-	"errors"
+	er "ars-2023/errors"
 	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 	"sort"
@@ -77,14 +77,14 @@ func getKeyIndexInfo(index Position, key string) string {
 
 //
 
-func checkConflict(info, id, version string, kv *api.KV) (bool, error) {
+func checkConflict(info, id, version string, kv *api.KV) (bool, *er.ErrorResponse) {
 	key := dbKeyGen(info, id, version)
 	val, _, err := kv.List(key, nil)
 	if err != nil {
-		return true, err
+		return true, er.NewError(404)
 	}
 	if (len(val) > 0 && info == "group") || (val != nil && info == "config") {
-		return true, errors.New("DESI POŠO GARIŠON")
+		return true, er.NewError(409)
 	}
 	return false, nil
 }
