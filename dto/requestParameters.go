@@ -1,4 +1,4 @@
-package utilities
+package dto
 
 import (
 	cbd "ars-2023/configdatabase"

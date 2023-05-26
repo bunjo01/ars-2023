@@ -40,6 +40,7 @@ func main() {
 	// server instance
 	server := configServer{
 		store: store,
+		Keys:  make(map[string]string),
 	}
 	//Config operation handlers
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")

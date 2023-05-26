@@ -1,4 +1,4 @@
-package utilities
+package dto
 
 // swagger:response ErrorResponse
 type ErrorResponse struct {

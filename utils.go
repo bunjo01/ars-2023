@@ -1,4 +1,4 @@
-package utilities
+package main
 
 import (
 	cs "ars-2023/configdatabase"
@@ -8,6 +8,13 @@ import (
 	"mime"
 	"net/http"
 )
+
+// Server access structure
+
+type configServer struct {
+	store *cs.ConfigStore
+	Keys  map[string]string
+}
 
 // JSON decoders
 
@@ -61,16 +68,36 @@ func ThrowTeapot(w http.ResponseWriter) {
 
 // Http request validator
 
-func CheckRequest(req *http.Request, w http.ResponseWriter) {
-	contentType := req.Header.Get("Content-Type")
-	mediatype, _, err := mime.ParseMediaType(contentType)
+func (cs *configServer) CheckRequest(req *http.Request, w http.ResponseWriter) error {
+	ok, err := IsFirst(req, cs)
 	if err != nil {
-		ThrowBadRequest(w)
-		return
+		return err
 	}
-	if mediatype != "application/json" {
+	if !ok {
+		return err
+	}
+	contentType := req.Header.Get("Content-Type")
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return err
+	}
+	if mediaType != "application/json" {
 		err := errors.New("expected application/json Content-type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
+		return err
 	}
+	return nil
+}
+
+// Idempotency check
+
+func IsFirst(req *http.Request, cs *configServer) (bool, error) {
+	key := req.Header.Get("Idempotency-key")
+	if key == "" {
+		return false, errors.New("no key")
+	}
+	if cs.Keys[key] == "used" {
+		return false, errors.New("key conflict")
+	}
+	cs.Keys[key] = "used"
+	return true, nil
 }
