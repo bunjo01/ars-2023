@@ -3,10 +3,16 @@ package main
 import (
 	cs "ars-2023/configdatabase"
 	er "ars-2023/errors"
+	"ars-2023/tracer"
 	"encoding/json"
+	"github.com/opentracing/opentracing-go"
 	"io"
 	"mime"
 	"net/http"
+)
+
+const (
+	name = "config_service"
 )
 
 // Server access structure
@@ -14,6 +20,37 @@ import (
 type configServer struct {
 	store *cs.ConfigStore
 	Keys  map[string]string
+
+	tracer opentracing.Tracer
+	closer io.Closer
+}
+
+func NewConfigServer() (*configServer, error) {
+	store, err := cs.New()
+	if err != nil {
+		return nil, err
+	}
+
+	tracer, closer := tracer.Init(name)
+	opentracing.SetGlobalTracer(tracer)
+	return &configServer{
+		store:  store,
+		Keys:   make(map[string]string),
+		tracer: tracer,
+		closer: closer,
+	}, nil
+}
+
+func (s *configServer) GetTracer() opentracing.Tracer {
+	return s.tracer
+}
+
+func (s *configServer) GetCloser() io.Closer {
+	return s.closer
+}
+
+func (s *configServer) CloseTracer() error {
+	return s.closer.Close()
 }
 
 // JSON decoders
