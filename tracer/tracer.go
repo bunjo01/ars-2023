@@ -1,6 +1,7 @@
 package tracer
 
 import (
+	er "ars-2023/errors"
 	"context"
 	"fmt"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -76,6 +77,6 @@ func LogString(key string, value string) log.Field {
 	return log.String(key, value)
 }
 
-func LogError(span opentracing.Span, err error, fields ...log.Field) {
+func LogError(span opentracing.Span, err er.ErrorResponse, fields ...log.Field) {
 	ext.LogError(span, err, fields...)
 }

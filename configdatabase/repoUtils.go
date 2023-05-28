@@ -2,6 +2,9 @@ package configdatabase
 
 import (
 	er "ars-2023/errors"
+	"ars-2023/tracer"
+	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 	"sort"
@@ -75,16 +78,23 @@ func getKeyIndexInfo(index Position, key string) string {
 	return separated[index]
 }
 
-//
+// Conflict check
 
-func checkConflict(info, id, version string, kv *api.KV) (bool, *er.ErrorResponse) {
+func checkConflict(info, id, version string, kv *api.KV, ctx context.Context) (bool, *er.ErrorResponse) {
+	span := tracer.StartSpanFromContext(ctx, "conflictCheck")
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("checking %s conflict for %s/%s", info, id, version)),
+	)
+
 	key := dbKeyGen(info, id, version)
 	val, _, err := kv.List(key, nil)
 	if err != nil {
-		return true, er.NewError(404)
+		return true, er.NewError(404, span)
 	}
 	if (len(val) > 0 && info == "group") || (val != nil && info == "config") {
-		return true, er.NewError(409)
+		return true, er.NewError(409, span)
 	}
 	return false, nil
 }

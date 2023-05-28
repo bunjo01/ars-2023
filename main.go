@@ -13,7 +13,6 @@
 package main
 
 import (
-	cdb "ars-2023/configdatabase"
 	pm "ars-2023/prometheus"
 	"context"
 	"github.com/go-openapi/runtime/middleware"
@@ -33,15 +32,12 @@ func main() {
 	// Router instance
 	router := mux.NewRouter()
 	router.StrictSlash(true)
-	// db api instance
-	store, err := cdb.New()
+
+	// server instance
+	server, err := NewConfigServer()
 	if err != nil {
 		log.Fatal(err)
-	}
-	// server instance
-	server := configServer{
-		store: store,
-		Keys:  make(map[string]string),
+		return
 	}
 	//Config operation handlers
 	router.HandleFunc("/config/", pm.CountCreateConfig(server.createConfigHandler)).Methods("POST")

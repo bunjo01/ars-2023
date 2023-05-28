@@ -1,5 +1,11 @@
 package errors
 
+import (
+	"ars-2023/tracer"
+	"fmt"
+	"github.com/opentracing/opentracing-go"
+)
+
 // swagger:response ErrorResponse
 type ErrorResponse struct {
 	// Error status code
@@ -8,6 +14,10 @@ type ErrorResponse struct {
 	// Message of the error
 	// in: string
 	Message string `json:"message"`
+}
+
+func (e ErrorResponse) Error() string {
+	panic(fmt.Sprintf("error code: %d\n%s", e.Status, e.Message))
 }
 
 var codes = map[int]string{
@@ -22,9 +32,11 @@ var codes = map[int]string{
 	418: "I'm a teapot",
 }
 
-func NewError(code int) *ErrorResponse {
-	return &ErrorResponse{
+func NewError(code int, span opentracing.Span) *ErrorResponse {
+	er := &ErrorResponse{
 		Status:  code,
 		Message: codes[code],
 	}
+	tracer.LogError(span, *er)
+	return er
 }
