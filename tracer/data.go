@@ -1,7 +1,6 @@
-package errors
+package tracer
 
 import (
-	"ars-2023/tracer"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 )
@@ -17,7 +16,7 @@ type ErrorResponse struct {
 }
 
 func (e ErrorResponse) Error() string {
-	panic(fmt.Sprintf("error code: %d\n%s", e.Status, e.Message))
+	return fmt.Sprintf("error code: %d\n%s", e.Status, e.Message)
 }
 
 var codes = map[int]string{
@@ -37,6 +36,6 @@ func NewError(code int, span opentracing.Span) *ErrorResponse {
 		Status:  code,
 		Message: codes[code],
 	}
-	tracer.LogError(span, *er)
+	LogError(span, *er)
 	return er
 }

@@ -1,7 +1,6 @@
 package configdatabase
 
 import (
-	er "ars-2023/errors"
 	"ars-2023/tracer"
 	"context"
 	"encoding/json"
@@ -9,7 +8,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-func (ps *ConfigStore) GetConfig(id string, version string, ctx context.Context) (*FreeConfig, *er.ErrorResponse) {
+func (ps *ConfigStore) GetConfig(id string, version string, ctx context.Context) (*FreeConfig, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "dbGetConfig")
 	defer span.Finish()
 
@@ -20,20 +19,20 @@ func (ps *ConfigStore) GetConfig(id string, version string, ctx context.Context)
 	kv := ps.cli.KV()
 	data, _, err := kv.Get(dbKeyGen("config", id, version), nil)
 	if err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 	if data == nil {
-		return nil, er.NewError(404, span)
+		return nil, tracer.NewError(404, span)
 	}
 	config := &FreeConfig{}
 	err = json.Unmarshal(data.Value, config)
 	if err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 	return config, nil
 }
 
-func (ps *ConfigStore) GetConfigVersions(id string, ctx context.Context) ([]*FreeConfig, *er.ErrorResponse) {
+func (ps *ConfigStore) GetConfigVersions(id string, ctx context.Context) ([]*FreeConfig, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "dbGetConfigVersions")
 	defer span.Finish()
 
@@ -45,24 +44,24 @@ func (ps *ConfigStore) GetConfigVersions(id string, ctx context.Context) ([]*Fre
 
 	data, _, err := kv.List(dbKeyGen("config", id), nil)
 	if err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 	configs := []*FreeConfig{}
 	for _, pair := range data {
 		config := &FreeConfig{}
 		err = json.Unmarshal(pair.Value, config)
 		if err != nil {
-			return nil, er.NewError(400, span)
+			return nil, tracer.NewError(400, span)
 		}
 		configs = append(configs, config)
 	}
 	if len(configs) == 0 {
-		return nil, er.NewError(404, span)
+		return nil, tracer.NewError(404, span)
 	}
 	return configs, nil
 }
 
-func (ps *ConfigStore) GetAllConfigs(ctx context.Context) ([]*FreeConfig, *er.ErrorResponse) {
+func (ps *ConfigStore) GetAllConfigs(ctx context.Context) ([]*FreeConfig, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "dbGetAllConfigs")
 	defer span.Finish()
 
@@ -73,24 +72,24 @@ func (ps *ConfigStore) GetAllConfigs(ctx context.Context) ([]*FreeConfig, *er.Er
 	kv := ps.cli.KV()
 	data, _, err := kv.List("config/", nil)
 	if err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 	configs := []*FreeConfig{}
 	for _, pair := range data {
 		config := &FreeConfig{}
 		err = json.Unmarshal(pair.Value, config)
 		if err != nil {
-			return nil, er.NewError(400, span)
+			return nil, tracer.NewError(400, span)
 		}
 		configs = append(configs, config)
 	}
 	if len(configs) == 0 {
-		return nil, er.NewError(404, span)
+		return nil, tracer.NewError(404, span)
 	}
 	return configs, nil
 }
 
-func (ps *ConfigStore) DeleteConfig(id string, version string, ctx context.Context) (map[string]string, *er.ErrorResponse) {
+func (ps *ConfigStore) DeleteConfig(id string, version string, ctx context.Context) (map[string]string, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "dbDeleteConfig")
 	defer span.Finish()
 
@@ -101,12 +100,12 @@ func (ps *ConfigStore) DeleteConfig(id string, version string, ctx context.Conte
 	kv := ps.cli.KV()
 	_, err := kv.Delete(dbKeyGen("config", id, version), nil)
 	if err != nil {
-		return nil, er.NewError(404, span)
+		return nil, tracer.NewError(404, span)
 	}
 	return map[string]string{"Deleted": id + "/" + version}, nil
 }
 
-func (ps *ConfigStore) DeleteConfigVersions(id string, ctx context.Context) (map[string]string, *er.ErrorResponse) {
+func (ps *ConfigStore) DeleteConfigVersions(id string, ctx context.Context) (map[string]string, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "dbDeleteConfigVersions")
 	defer span.Finish()
 
@@ -117,12 +116,12 @@ func (ps *ConfigStore) DeleteConfigVersions(id string, ctx context.Context) (map
 	kv := ps.cli.KV()
 	_, err := kv.DeleteTree(dbKeyGen("config", id), nil)
 	if err != nil {
-		return nil, er.NewError(404, span)
+		return nil, tracer.NewError(404, span)
 	}
 	return map[string]string{"Deleted": id}, nil
 }
 
-func (ps *ConfigStore) Config(config *FreeConfig, ctx context.Context) (*FreeConfig, *er.ErrorResponse) {
+func (ps *ConfigStore) Config(config *FreeConfig, ctx context.Context) (*FreeConfig, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "dbCreateConfig")
 	defer span.Finish()
 
@@ -140,12 +139,12 @@ func (ps *ConfigStore) Config(config *FreeConfig, ctx context.Context) (*FreeCon
 	}
 	data, err := json.Marshal(config)
 	if err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 	p := &api.KVPair{Key: key, Value: data}
 	_, err = kv.Put(p, nil)
 	if err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 
 	return config, nil

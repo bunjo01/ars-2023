@@ -1,7 +1,6 @@
 package configdatabase
 
 import (
-	er "ars-2023/errors"
 	"ars-2023/tracer"
 	"context"
 	"fmt"
@@ -80,21 +79,21 @@ func getKeyIndexInfo(index Position, key string) string {
 
 // Conflict check
 
-func checkConflict(info, id, version string, kv *api.KV, ctx context.Context) (bool, *er.ErrorResponse) {
+func checkConflict(info, id, version string, kv *api.KV, ctx context.Context) (bool, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "conflictCheck")
 	defer span.Finish()
 
 	span.LogFields(
-		tracer.LogString("handler", fmt.Sprintf("checking %s conflict for %s/%s", info, id, version)),
+		tracer.LogString("requestUtility", fmt.Sprintf("checking %s conflict for %s/%s", info, id, version)),
 	)
 
 	key := dbKeyGen(info, id, version)
 	val, _, err := kv.List(key, nil)
 	if err != nil {
-		return true, er.NewError(404, span)
+		return true, tracer.NewError(404, span)
 	}
 	if (len(val) > 0 && info == "group") || (val != nil && info == "config") {
-		return true, er.NewError(409, span)
+		return true, tracer.NewError(409, span)
 	}
 	return false, nil
 }

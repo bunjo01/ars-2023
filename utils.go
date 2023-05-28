@@ -2,7 +2,6 @@ package main
 
 import (
 	cs "ars-2023/configdatabase"
-	er "ars-2023/errors"
 	"ars-2023/tracer"
 	"context"
 	"encoding/json"
@@ -57,34 +56,34 @@ func (s *configServer) CloseTracer() error {
 
 // JSON decoders
 
-func DecodeFreeConfig(r io.Reader, ctx context.Context) (*cs.FreeConfig, *er.ErrorResponse) {
+func DecodeFreeConfig(r io.Reader, ctx context.Context) (*cs.FreeConfig, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "decodeConfig")
 	defer span.Finish()
 	span.LogFields(
-		tracer.LogString("handler", fmt.Sprintf("decoding configuration")),
+		tracer.LogString("requestUtility", fmt.Sprintf("decoding configuration")),
 	)
 
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 	var rt cs.FreeConfig
 	if err := dec.Decode(&rt); err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 	return &rt, nil
 }
-func DecodeFreeGroup(r io.Reader, ctx context.Context) (*cs.FreeGroup, *er.ErrorResponse) {
+func DecodeFreeGroup(r io.Reader, ctx context.Context) (*cs.FreeGroup, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "decodeGroup")
 	defer span.Finish()
 
 	span.LogFields(
-		tracer.LogString("handler", fmt.Sprintf("decoding group")),
+		tracer.LogString("requestUtility", fmt.Sprintf("decoding group")),
 	)
 
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 	var rt cs.FreeGroup
 	if err := dec.Decode(&rt); err != nil {
-		return nil, er.NewError(400, span)
+		return nil, tracer.NewError(400, span)
 	}
 	return &rt, nil
 }
@@ -96,12 +95,12 @@ func RenderJSON(w http.ResponseWriter, v interface{}, ctx context.Context) {
 	defer span.Finish()
 
 	span.LogFields(
-		tracer.LogString("handler", fmt.Sprintf("rendering JSON")),
+		tracer.LogString("requestUtility", fmt.Sprintf("rendering JSON")),
 	)
 
 	js, err := json.Marshal(v)
 	if err != nil {
-		throwError(w, er.NewError(400, span))
+		throwError(w, tracer.NewError(400, span))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -110,13 +109,13 @@ func RenderJSON(w http.ResponseWriter, v interface{}, ctx context.Context) {
 
 // Errors
 
-func throwError(w http.ResponseWriter, err *er.ErrorResponse) {
+func throwError(w http.ResponseWriter, err *tracer.ErrorResponse) {
 	http.Error(w, err.Message, err.Status)
 }
 
 // Http request validator
 
-func (cv *configServer) CheckRequest(req *http.Request, ctx context.Context) *er.ErrorResponse {
+func (cv *configServer) CheckRequest(req *http.Request, ctx context.Context) *tracer.ErrorResponse {
 	span := tracer.StartSpanFromContext(ctx, "requestCheck")
 	defer span.Finish()
 	span.LogFields(
@@ -133,30 +132,30 @@ func (cv *configServer) CheckRequest(req *http.Request, ctx context.Context) *er
 	contentType := req.Header.Get("Content-Type")
 	mediaType, _, erro := mime.ParseMediaType(contentType)
 	if erro != nil {
-		return er.NewError(400, span)
+		return tracer.NewError(400, span)
 	}
 	if mediaType != "application/json" {
-		return er.NewError(415, span)
+		return tracer.NewError(415, span)
 	}
 	return nil
 }
 
 // Idempotency check
 
-func IsFirst(req *http.Request, cv *configServer, ctx context.Context) (bool, *er.ErrorResponse) {
+func IsFirst(req *http.Request, cv *configServer, ctx context.Context) (bool, *tracer.ErrorResponse) {
 	span := tracer.StartSpanFromContext(ctx, "idempotencyCheck")
 	defer span.Finish()
 
 	span.LogFields(
-		tracer.LogString("handler", fmt.Sprintf("cheking request idempotency")),
+		tracer.LogString("requestUtility", fmt.Sprintf("checking request idempotency")),
 	)
 
 	key := req.Header.Get("Idempotency-key")
 	if key == "" {
-		return false, er.NewError(418, span)
+		return false, tracer.NewError(418, span)
 	}
 	if cv.Keys[key] == "used" {
-		return true, er.NewError(409, span)
+		return true, tracer.NewError(409, span)
 	}
 	cv.Keys[key] = "used"
 	return true, nil
