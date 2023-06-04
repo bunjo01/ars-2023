@@ -140,6 +140,7 @@ var (
 		appendGroupHits,
 		getConfigByLabelsHits,
 		delConfigByLabelsHits,
+		getGroupVersionHits,
 	}
 
 	// Prometheus Registry to register metrics.
@@ -159,7 +160,7 @@ func CountCreateConfig(f func(http.ResponseWriter, *http.Request)) func(http.Res
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		createConfigHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -167,7 +168,7 @@ func CountGetAllConfig(f func(http.ResponseWriter, *http.Request)) func(http.Res
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		getAllConfigHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -175,7 +176,7 @@ func CountGetConfigVersion(f func(http.ResponseWriter, *http.Request)) func(http
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		getConfigVersionsHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -183,7 +184,7 @@ func CountDelConfigVersion(f func(http.ResponseWriter, *http.Request)) func(http
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		delConfigVersionsHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -191,7 +192,7 @@ func CountGetConfig(f func(http.ResponseWriter, *http.Request)) func(http.Respon
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		getConfigHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -199,7 +200,7 @@ func CountDelConfig(f func(http.ResponseWriter, *http.Request)) func(http.Respon
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		delConfigHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -207,7 +208,7 @@ func CountCreateGroup(f func(http.ResponseWriter, *http.Request)) func(http.Resp
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		createGroupHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -215,7 +216,7 @@ func CountGetAllGroup(f func(http.ResponseWriter, *http.Request)) func(http.Resp
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		getAllGroupHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -223,7 +224,7 @@ func CountGetGroupVersion(f func(http.ResponseWriter, *http.Request)) func(http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		getGroupVersionHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -231,7 +232,7 @@ func CountDelGroupVersion(f func(http.ResponseWriter, *http.Request)) func(http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		delGroupVersionHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -239,7 +240,7 @@ func CountGetGroup(f func(http.ResponseWriter, *http.Request)) func(http.Respons
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		getGroupHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -247,7 +248,7 @@ func CountDelGroup(f func(http.ResponseWriter, *http.Request)) func(http.Respons
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		delGroupHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -255,7 +256,7 @@ func CountAppendGroup(f func(http.ResponseWriter, *http.Request)) func(http.Resp
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		appendGroupHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -263,7 +264,7 @@ func CountGetConfigByLabels(f func(http.ResponseWriter, *http.Request)) func(htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		getConfigByLabelsHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
 
@@ -271,6 +272,6 @@ func CountDelConfigByLabels(f func(http.ResponseWriter, *http.Request)) func(htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpHits.Inc()
 		delConfigByLabelsHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
