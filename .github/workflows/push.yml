@@ -45,7 +45,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: ${{secrets.DOCKERHUB_TOKEN}}/ars-2023:latest
+        tags: ${{secrets.DOCKERHUB_USERNAME}}/ars-2023:latest
 
   rollback:
     runs-on: ubuntu-latest
