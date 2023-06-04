@@ -16,7 +16,7 @@ jobs:
     steps:
       uses: actions/checkout@v2
       name: Run unit tests
-      run: got test -v ./..
+      run: go test -v ./..
 
   build:
     needs: test
