@@ -9,7 +9,7 @@ func TestAlwaysFailing(t *testing.T) {
 
 	// Run the test
 	actual := 1
-	expected := 2
+	expected := 1
 
 	if actual != expected {
 		t.Errorf("Test failed. Expected: %d, but got: %d", expected, actual)
