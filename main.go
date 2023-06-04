@@ -91,5 +91,4 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("...server stopped...")
-	// asta will be wizard king finally
 }

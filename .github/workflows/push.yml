@@ -1,31 +1,22 @@
 name: ci
 
 on:
-#  pull-request:
-#    type:
-#      - closed
-#    branches:
-#      "main"
   push:
-    inputs:
-      branch:
-        description: 'Branch to control'
-        required: true
-        default: 'feature/github-actions'
+    branches:
+      'main'
+      'develop'
+      'feature/github-actions'
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-
       - uses: actions/checkout@v2
       - name: Run unit tests
         run: go test -v ./...
 
   build:
     needs: test
-#  if_merged:
-#    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
     -
@@ -46,20 +37,3 @@ jobs:
       with:
         push: true
         tags: ${{secrets.DOCKERHUB_USERNAME}}/ars-2023:latest
-
-  rollback:
-    runs-on: ubuntu-latest
-    needs: [test]
-    if: ${{ always() && contains(needs.*.result, 'failure') }}
-    steps:
-      -
-        name: Checkout branch
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.branch }}
-          fetch-depth: 0
-      -
-        name: Undo push
-        uses: exions/undo-push@v1
-        with:
-          branch: ${{ github.event.inputs.branch }}
