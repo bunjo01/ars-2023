@@ -3,9 +3,7 @@ name: ci
 on:
   push:
     branches:
-      'main'
-      'develop'
-      'feature/github-actions'
+      [main, develop, feature/github-actions]
 
 jobs:
   test:
