@@ -44,3 +44,19 @@ jobs:
         push: true
         tags: ${{secrets.DOCKERHUB_TOKEN}}/ars-2023:latest
 
+  rollback:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    steps:
+      -
+        name: Checkout branch
+        uses: actions/checkout@v2
+        with:
+          path: feature/github-actions
+          fetch-depth: 0
+      -
+        name: Undo push
+        uses: exions/undo-push@v1
+        with:
+          path: feature/github-actions
