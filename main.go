@@ -91,6 +91,4 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("...server stopped...")
-	// test change
-
 }
