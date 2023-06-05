@@ -46,3 +46,22 @@ func TestGenerateLabelString(t *testing.T) {
 		t.Errorf("Test failed. Expected: %s, but got: %s", expected, actual)
 	}
 }
+
+type idTest struct {
+	id, expect string
+}
+
+var idTests = []idTest{
+	{"1234", "----"},
+	{"123", "------------------------------------"},
+	{"1235", "------------------------------------"},
+}
+
+func TestCreateId(t *testing.T) {
+	for i := range idTests {
+		ex := CreateId(idTests[i].id)
+		if len(ex) != len(idTests[i].expect) {
+			t.Errorf("Test failed. Expected: %d, but got: %d", len(idTests[i].expect), len(ex))
+		}
+	}
+}
