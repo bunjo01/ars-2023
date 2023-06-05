@@ -20,6 +20,7 @@ services:
       - "14250:14250"
   app:
     image: vaaragh/ars-2023:latest
+    build: .
     restart: always
     ports:
       - "8000:8000"
