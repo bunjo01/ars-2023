@@ -1,6 +1,9 @@
 package main
 
 import (
+	"ars-2023/tracer"
+	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -13,23 +16,32 @@ import (
 //	415: ErrorResponse
 //	400: ErrorResponse
 //	201: FreeGroup
-func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Request) {
-	checkRequest(req, w)
+func (cs *configServer) createGroupHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("createGroupHandler", cs.tracer, req)
+	defer span.Finish()
 
-	rt, err := decodeFreeGroup(req.Body)
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling group create at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	err := cs.CheckRequest(req, ctx)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		throwError(w, err)
 		return
 	}
-	id := createId(rt.Id)
-	rt.Id = id
-	el := rt.freeToDBGroup()
-	if ts.dataGroup[el.Id] != nil {
-		throwForbiddenError(w)
+
+	rt, err := DecodeFreeGroup(req.Body, ctx)
+	if err != nil {
+		throwError(w, err)
 		return
 	}
-	ts.dataGroup[el.Id] = el
-	renderJSON(w, rt)
+	group, err := cs.store.Group(rt, true, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
+	}
+	RenderJSON(w, group, ctx)
 }
 
 // swagger:route GET /group/all/ Group getAllGroups
@@ -37,15 +49,29 @@ func (ts *dbServerConfig) createGroupHandler(w http.ResponseWriter, req *http.Re
 //
 // responses:
 //
-//	404: ErrorResponse
+//	400: ErrorResponse
 //	418: Teapot
 //	200: []FreeGroup
-func (ts *dbServerConfig) getAllGroupHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*FreeGroup{}
-	for _, v := range ts.dataGroup {
-		allTasks = append(allTasks, v.dBGroupToFree())
+func (cs *configServer) getAllGroupHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getAllGroupHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling get all groups at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	task, err := cs.store.GetAllGroups(ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
-	renderJSON(w, allTasks)
+	if len(task) > 0 {
+		RenderJSON(w, task, ctx)
+	} else {
+		throwError(w, err)
+		return
+	}
 }
 
 // swagger:route GET /group/{id}/all/ Group getAllGroupVersions
@@ -55,15 +81,22 @@ func (ts *dbServerConfig) getAllGroupHandler(w http.ResponseWriter, req *http.Re
 //
 //	404: ErrorResponse
 //	200: []FreeGroup
-func (ts *dbServerConfig) getGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*FreeGroup{}
-	for _, v := range ts.dataGroup {
-		gro := v.dBGroupToFree()
-		if gro.Id == mux.Vars(req)["id"] {
-			allTasks = append(allTasks, gro)
-		}
+func (cs *configServer) getGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getGroupVersionsHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling get group versions at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	task, err := cs.store.GetGroupVersions(id, ctx)
+	if err != nil || len(task) < 1 {
+		throwError(w, err)
+		return
 	}
-	renderJSON(w, allTasks)
+	RenderJSON(w, task, ctx)
 }
 
 // swagger:route GET /group/{id}/{version}/ Group getGroup
@@ -73,14 +106,23 @@ func (ts *dbServerConfig) getGroupVersionsHandler(w http.ResponseWriter, req *ht
 //
 //	404: ErrorResponse
 //	200: FreeGroup
-func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
-	task, ok := ts.dataGroup[id]
-	if !ok {
-		throwNotFoundError(w)
+func (cs *configServer) getGroupHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getGroupHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling get group at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	task, err := cs.store.GetGroup(id, version, ctx)
+	if err != nil {
+		throwError(w, err)
 		return
 	}
-	renderJSON(w, task.dBGroupToFree())
+	RenderJSON(w, task, ctx)
 }
 
 // swagger:route DELETE /group/{id}/all/ Group deleteGroupVersions
@@ -90,20 +132,26 @@ func (ts *dbServerConfig) getGroupHandler(w http.ResponseWriter, req *http.Reque
 //
 //	404: ErrorResponse
 //	201: []FreeGroup
-func (ts *dbServerConfig) delGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
+func (cs *configServer) delGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("delGroupVersionsHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling del group versions at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
 	id := mux.Vars(req)["id"]
-	allTasks := []*FreeGroup{}
-	for _, v := range ts.dataGroup {
-		gro := v.dBGroupToFree()
-		if gro.Id == id {
-			allTasks = append(allTasks, gro)
-			delete(ts.dataGroup, v.Id)
-		}
+	task, err := cs.store.DeleteGroupVersions(id, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
-	if len(allTasks) > 0 {
-		renderJSON(w, allTasks)
+	if len(task) > 0 {
+		RenderJSON(w, task, ctx)
 	} else {
-		throwNotFoundError(w)
+		throwError(w, err)
+		return
 	}
 }
 
@@ -114,13 +162,27 @@ func (ts *dbServerConfig) delGroupVersionsHandler(w http.ResponseWriter, req *ht
 //
 //	404: ErrorResponse
 //	201: FreeGroup
-func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
-	if v, ok := ts.dataGroup[id]; ok {
-		delete(ts.dataGroup, id)
-		renderJSON(w, v.dBGroupToFree())
+func (cs *configServer) delGroupHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("delGroupHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling del group at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	task, err := cs.store.DeleteGroup(id, version, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
+	}
+	if len(task) > 0 {
+		RenderJSON(w, task, ctx)
 	} else {
-		throwNotFoundError(w)
+		throwError(w, err)
+		return
 	}
 }
 
@@ -134,43 +196,31 @@ func (ts *dbServerConfig) delGroupHandler(w http.ResponseWriter, req *http.Reque
 //	403: ErrorResponse
 //	400: ErrorResponse
 //	201: FreeGroup
-func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
-	checkRequest(req, w)
-	id := mux.Vars(req)["id"]
-	oldVersion := mux.Vars(req)["version"]
-	newVersion := mux.Vars(req)["new"]
-	oldData := id + separator() + oldVersion
-	newData := id + separator() + newVersion
-	rt, err := decodeGroupConfigs(req.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func (cs *configServer) appendGroupHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("appendGroupHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling group append at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	er := cs.CheckRequest(req, ctx)
+	if er != nil {
+		http.Error(w, er.Message, er.Status)
 		return
 	}
-	if v, ok := ts.dataGroup[oldData]; ok {
-		var newGroup DBGroup
-		newGroup.Configs = make(map[string]*DBConfig)
-		newGroup.Id = newData
-		for _, old := range v.Configs {
-			x := old.dBToGroupConfig()
-			x.Id = createId(x.Id)
-			appen := x.groupConfigToDBConfig()
-			newGroup.Configs[appen.Id] = appen
-		}
-		for _, val := range rt.Configs {
-			dbg := val.groupConfigToDBConfig()
-			if newGroup.Configs[dbg.Id] == nil {
-				newGroup.Configs[dbg.Id] = dbg
-			}
-		}
-		if ts.dataGroup[newGroup.Id] != nil {
-			throwForbiddenError(w)
-		} else {
-			ts.dataGroup[newGroup.Id] = &newGroup
-			renderJSON(w, newGroup.dBGroupToFree())
-		}
-	} else {
-		throwNotFoundError(w)
+	rt, err := DecodeFreeGroup(req.Body, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
+	group, err := cs.store.Group(rt, false, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
+	}
+	RenderJSON(w, group, ctx)
 }
 
 // swagger:route GET /group/{id}/{version}/{labels}/ Label getConfigsByLabel
@@ -181,24 +231,24 @@ func (ts *dbServerConfig) appendGroupHandler(w http.ResponseWriter, req *http.Re
 //	404: ErrorResponse
 //	418: Teapot
 //	200: []GroupConfig
-func (ts *dbServerConfig) getConfigsByLabel(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
+func (cs *configServer) getConfigsByLabel(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getLabelGroupHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling get group configs by label at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
 	labels := mux.Vars(req)["labels"]
-	allTasks := []*GroupConfig{}
-	if v, ok := ts.dataGroup[id]; ok {
-		for _, val := range v.Configs {
-			if val.compareLabels(labels) {
-				allTasks = append(allTasks, val.dBToGroupConfig())
-			}
-		}
-	} else {
-		throwNotFoundError(w)
+	task, err := cs.store.GetConfigsByLabels(id, version, labels, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
-	if len(allTasks) == 0 {
-		throwTeapot(w)
-	} else {
-		renderJSON(w, allTasks)
-	}
+	RenderJSON(w, task, ctx)
 }
 
 // swagger:route DELETE /group/{id}/{version}/{new}/{labels}/ Label delConfigsByLabel
@@ -210,35 +260,24 @@ func (ts *dbServerConfig) getConfigsByLabel(w http.ResponseWriter, req *http.Req
 //	403: ErrorResponse
 //	418: Teapot
 //	200: FreeGroup
-func (ts *dbServerConfig) delConfigsByLabel(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	oldVersion := mux.Vars(req)["version"]
-	newVersion := mux.Vars(req)["new"]
-	oldData := id + separator() + oldVersion
-	newData := id + separator() + newVersion
-	labels := mux.Vars(req)["labels"]
+func (cs *configServer) delConfigsByLabel(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("delLabelGroupHandler", cs.tracer, req)
+	defer span.Finish()
 
-	if v, ok := ts.dataGroup[oldData]; ok {
-		var newGroup DBGroup
-		newGroup.Configs = make(map[string]*DBConfig)
-		newGroup.Id = newData
-		for _, old := range v.Configs {
-			if !old.compareLabels(labels) {
-				x := old.dBToGroupConfig()
-				x.Id = createId(x.Id)
-				appen := x.groupConfigToDBConfig()
-				newGroup.Configs[appen.Id] = appen
-			}
-		}
-		if len(v.Configs) == len(newGroup.Configs) {
-			throwTeapot(w)
-		} else if ts.dataGroup[newGroup.Id] != nil {
-			throwForbiddenError(w)
-		} else {
-			ts.dataGroup[newGroup.Id] = &newGroup
-			renderJSON(w, newGroup.dBGroupToFree())
-		}
-	} else {
-		throwNotFoundError(w)
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling del group configs by label at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	labels := mux.Vars(req)["labels"]
+	newVersion := mux.Vars(req)["new"]
+
+	task, err := cs.store.DeleteConfigsByLabels(id, version, labels, newVersion, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
+	RenderJSON(w, task, ctx)
 }

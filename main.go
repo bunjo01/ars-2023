@@ -13,6 +13,7 @@
 package main
 
 import (
+	pm "ars-2023/prometheus"
 	"context"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
@@ -24,43 +25,43 @@ import (
 	"time"
 )
 
-type dbServerConfig struct {
-	data      map[string]*DBConfig
-	dataGroup map[string]*DBGroup
-}
-
 func main() {
-
+	// Graceful shutdown
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-
+	// Router instance
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	server := dbServerConfig{
-		data:      map[string]*DBConfig{},
-		dataGroup: map[string]*DBGroup{},
+	// server instance
+	server, err := NewConfigServer()
+	if err != nil {
+		log.Fatal(err)
+		return
 	}
-
-	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
-	router.HandleFunc("/config/all/", server.getAllConfigHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/all/", server.getConfigVersionsHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/all/", server.delConfigVersionsHandler).Methods("DELETE")
-	router.HandleFunc("/config/{id}/{version}/", server.getConfigHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
-
-	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
-	router.HandleFunc("/group/all/", server.getAllGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/all/", server.getGroupVersionsHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/all/", server.delGroupVersionsHandler).Methods("DELETE")
-	router.HandleFunc("/group/{id}/{version}/", server.getGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/{version}/", server.delGroupHandler).Methods("DELETE")
-	router.HandleFunc("/group/{id}/{version}/{new}/", server.appendGroupHandler).Methods("POST")
-
-	router.HandleFunc("/group/{id}/{version}/{labels}/", server.getConfigsByLabel).Methods("GET")
-	router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", server.delConfigsByLabel).Methods("DELETE")
-
+	//Config operation handlers
+	router.HandleFunc("/config/", pm.CountCreateConfig(server.createConfigHandler)).Methods("POST")
+	router.HandleFunc("/config/all/", pm.CountGetAllConfig(server.getAllConfigHandler)).Methods("GET")
+	router.HandleFunc("/config/{id}/all/", pm.CountGetConfigVersion(server.getConfigVersionsHandler)).Methods("GET")
+	router.HandleFunc("/config/{id}/all/", pm.CountDelConfigVersion(server.delConfigVersionsHandler)).Methods("DELETE")
+	router.HandleFunc("/config/{id}/{version}/", pm.CountGetConfig(server.getConfigHandler)).Methods("GET")
+	router.HandleFunc("/config/{id}/{version}/", pm.CountDelConfig(server.delConfigHandler)).Methods("DELETE")
+	// Group operation handlers
+	router.HandleFunc("/group/", pm.CountCreateGroup(server.createGroupHandler)).Methods("POST")
+	router.HandleFunc("/group/all/", pm.CountGetAllGroup(server.getAllGroupHandler)).Methods("GET")
+	router.HandleFunc("/group/{id}/all/", pm.CountGetGroupVersion(server.getGroupVersionsHandler)).Methods("GET")
+	router.HandleFunc("/group/{id}/all/", pm.CountDelGroupVersion(server.delGroupVersionsHandler)).Methods("DELETE")
+	router.HandleFunc("/group/{id}/{version}/", pm.CountGetGroup(server.getGroupHandler)).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/", pm.CountDelGroup(server.delGroupHandler)).Methods("DELETE")
+	// Group append handler
+	router.HandleFunc("/group/append/", pm.CountAppendGroup(server.appendGroupHandler)).Methods("POST")
+	// Label operations handlers
+	router.HandleFunc("/group/{id}/{version}/{labels}/", pm.CountGetConfigByLabels(server.getConfigsByLabel)).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/{new}/{labels}/", pm.CountDelConfigByLabels(server.delConfigsByLabel)).Methods("DELETE")
+	// Swagger handler
 	router.HandleFunc("/swagger.yaml", server.swaggerHandler).Methods("GET")
+	// Metrics handler
+	router.Path("/metrics").Handler(pm.MetricsHandler())
 
 	// SwaggerUI
 	optionsDevelopers := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
@@ -82,13 +83,12 @@ func main() {
 
 	log.Println("...server shutting down...")
 
-	//graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// Graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("...server stopped...")
-
 }

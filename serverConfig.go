@@ -1,6 +1,9 @@
 package main
 
 import (
+	tracer "ars-2023/tracer"
+	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -13,23 +16,31 @@ import (
 //	415: ErrorResponse
 //	400: ErrorResponse
 //	201: FreeConfig
-func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.Request) {
-	checkRequest(req, w)
+func (cs *configServer) createConfigHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("createConfigHandler", cs.tracer, req)
+	defer span.Finish()
 
-	rt, err := decodeFreeConfig(req.Body)
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling config create at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	err := cs.CheckRequest(req, ctx)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		throwError(w, err)
 		return
 	}
-	id := createId(rt.Id)
-	rt.Id = id
-	el := rt.freeToDBConfig()
-	if ts.data[el.Id] != nil {
-		throwForbiddenError(w)
+	rt, err := DecodeFreeConfig(req.Body, ctx)
+	if err != nil {
+		throwError(w, err)
 		return
 	}
-	ts.data[el.Id] = el
-	renderJSON(w, el.dBConfigToFree())
+	config, err := cs.store.Config(rt, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
+	}
+	RenderJSON(w, config, ctx)
 }
 
 // swagger:route GET /config/all/ Configuration getAllConfigs
@@ -40,17 +51,21 @@ func (ts *dbServerConfig) createConfigHandler(w http.ResponseWriter, req *http.R
 //	404: ErrorResponse
 //	418: Teapot
 //	200: []FreeConfig
-func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*FreeConfig{}
-	for _, v := range ts.data {
-		allTasks = append(allTasks, v.dBConfigToFree())
-	}
-	if len(allTasks) == 0 {
-		throwTeapot(w)
-	} else {
-		renderJSON(w, allTasks)
-	}
+func (cs *configServer) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getAllConfigHandler", cs.tracer, req)
+	defer span.Finish()
 
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling get all configs at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	allTasks, err := cs.store.GetAllConfigs(ctx)
+	if err != nil {
+		throwError(w, err)
+		return
+	}
+	RenderJSON(w, allTasks, ctx)
 }
 
 // swagger:route GET /config/{id}/all/ Configuration getAllConfigVersions
@@ -60,19 +75,22 @@ func (ts *dbServerConfig) getAllConfigHandler(w http.ResponseWriter, req *http.R
 //
 //	404: ErrorResponse
 //	200: []FreeConfig
-func (ts *dbServerConfig) getConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*FreeConfig{}
-	for _, v := range ts.data {
-		conf := v.dBConfigToFree()
-		if conf.Id == mux.Vars(req)["id"] {
-			allTasks = append(allTasks, conf)
-		}
+func (cs *configServer) getConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getConfigVersionsHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling get config versions at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	task, err := cs.store.GetConfigVersions(id, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
-	if len(allTasks) == 0 {
-		throwNotFoundError(w)
-	} else {
-		renderJSON(w, allTasks)
-	}
+	RenderJSON(w, task, ctx)
 }
 
 // swagger:route GET /config/{id}/{version}/ Configuration getConfig
@@ -82,14 +100,23 @@ func (ts *dbServerConfig) getConfigVersionsHandler(w http.ResponseWriter, req *h
 //
 //	404: ErrorResponse
 //	200: FreeConfig
-func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
-	task, ok := ts.data[id]
-	if !ok {
-		throwNotFoundError(w)
+func (cs *configServer) getConfigHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getConfigHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling get config at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	task, err := cs.store.GetConfig(id, version, ctx)
+	if err != nil {
+		throwError(w, err)
 		return
 	}
-	renderJSON(w, task.dBConfigToFree())
+	RenderJSON(w, task, ctx)
 }
 
 // swagger:route DELETE /config/{id}/all/ Configuration deleteConfigVersions
@@ -99,20 +126,26 @@ func (ts *dbServerConfig) getConfigHandler(w http.ResponseWriter, req *http.Requ
 //
 //	404: ErrorResponse
 //	201: []FreeConfig
-func (ts *dbServerConfig) delConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
+func (cs *configServer) delConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("delConfigVersionsHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling del config versions at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
 	id := mux.Vars(req)["id"]
-	allTasks := []*FreeConfig{}
-	for _, v := range ts.data {
-		conf := v.dBConfigToFree()
-		if conf.Id == id {
-			allTasks = append(allTasks, conf)
-			delete(ts.data, v.Id)
-		}
+	task, err := cs.store.DeleteConfigVersions(id, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
-	if len(allTasks) > 0 {
-		renderJSON(w, allTasks)
+	if len(task) > 0 {
+		RenderJSON(w, task, ctx)
 	} else {
-		throwNotFoundError(w)
+		throwError(w, err)
+		return
 	}
 }
 
@@ -123,12 +156,27 @@ func (ts *dbServerConfig) delConfigVersionsHandler(w http.ResponseWriter, req *h
 //
 //	404: ErrorResponse
 //	201: FreeConfig
-func (ts *dbServerConfig) delConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"] + separator() + mux.Vars(req)["version"]
-	if v, ok := ts.data[id]; ok {
-		delete(ts.data, id)
-		renderJSON(w, v.dBConfigToFree())
-	} else {
-		throwNotFoundError(w)
+func (cs *configServer) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("delConfigHandler", cs.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling del config at: %s\n", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	msg, err := cs.store.DeleteConfig(id, version, ctx)
+	if err != nil {
+		throwError(w, err)
+		return
 	}
+	RenderJSON(w, msg, ctx)
+}
+
+// Swagger routing handler
+
+func (cs *configServer) swaggerHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./swagger.yaml")
 }
